@@ -6,6 +6,8 @@ use App\Lib\EnsureBilling;
 use App\Lib\ProductCreator;
 use App\Models\Session;
 use \App\Models\GiftProduct;
+use \App\Models\AphClick;
+use \App\Models\AphGiftCartInsight;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
@@ -66,7 +68,7 @@ Route::get('/api/auth/callback', function (Request $request) {
 
     $response = Registry::register('/api/webhooks', Topics::APP_UNINSTALLED, $shop, $session->getAccessToken());
     if ($response->isSuccess()) {
-        Log::debug("Registered APP_UNINSTALLED webhook for shop $shop");
+        Log::debug("Registered APP_UNINSTALLED webhook for shop $shop and host $host");
     } else {
         Log::error(
             "Failed to register APP_UNINSTALLED webhook for shop $shop with response body: " .
@@ -94,6 +96,53 @@ Route::get('/api/products/count', function (Request $request) {
     $result = $client->get('products/count');
 
     return response($result->getDecodedBody());
+})->middleware('shopify.auth');
+
+Route::get('/api/gift/gettheme', function (Request $request) {
+    /** @var AuthSession */
+    $session = $request->get('shopifySession'); // Provided by the shopify.auth middleware, guaranteed to be active
+
+    $client = new Rest($session->getShop(), $session->getAccessToken());
+    $themes = $client->get('themes');
+    $themes = $themes->getDecodedBody();
+    $published_theme = null;
+    $app_block_templates = ['product', 'collection', 'index'];
+    $templateJSONFiles = [];
+    $ret_str = '';
+    $is_tag = false;
+     
+    foreach($themes['themes'] as $theme) {
+        if ($theme['role'] === 'main') {
+            $published_theme = $theme['id'];
+        }
+    }
+
+    // Retrieve a list of assets in the published theme
+    $assets = $client->get('themes/'. $published_theme . '/assets');
+    $assets = $assets->getDecodedBody();
+
+    // Check if JSON template files exist for the template specified in APP_BLOCK_TEMPLATES
+    foreach($assets['assets'] as $asset) {
+        foreach ($app_block_templates as $template) {
+            if ($asset['key'] === "templates/{$template}.json") {
+                $templateJSONFiles[] = $asset['key'];
+            }
+        }
+    }
+    if (count($templateJSONFiles) > 0 && (count($templateJSONFiles) === count($app_block_templates))) {
+        $ret_str = 'All desired templates support sections everywhere!';
+    } else if (count($templateJSONFiles)) {
+        $ret_str = 'Only some of the desired templates support sections everywhere.';
+    } else {
+        if(!(is_script_tag($session->getShop()))) {
+            $proOd = new ProductCreator();
+            $proResp = $proOd->setScriptTag($session);
+            $product_info = json_decode($proResp);
+        }
+        $is_tag = true;
+    }
+
+    return response()->json(["isTag" => $is_tag,"success" => true, "error" => '', "message" => $ret_str]);
 })->middleware('shopify.auth');
 
 Route::get('/api/products/create', function (Request $request) {
@@ -134,7 +183,7 @@ Route::post('/api/gift/create', function (Request $request) {
     $success = $code = $error = null;
     try {
         
-        $proResp = $proO->createGiftProduct($session, $request->prodTitle, $request->prodPrice, $request->prodDescription, '');
+        $proResp = $proO->createGiftProduct($session, $request->prodTitle, $request->prodPrice, $request->prodDescription, $request->prodImgLink);
         $success = true;
         $code = 200;
         $error = null;
@@ -178,7 +227,7 @@ Route::post('/api/gift/update', function (Request $request) {
     try {
         if($prodData) {
 
-            $proResp = $proO->updateGiftProduct($session, $prodData->product_gid, $request->prodTitle, $request->prodPrice, $request->prodDescription, '');
+            $proResp = $proO->updateGiftProduct($session, $prodData->product_gid, $request->prodTitle, $request->prodPrice, $request->prodDescription, $request->prodImgLink);
             $success = true;
             $code = 200;
             $error = null;
@@ -187,7 +236,7 @@ Route::post('/api/gift/update', function (Request $request) {
             $pid = $proResp->data->productUpdate->product->id;
             $variant_id = $proResp->data->productUpdate->product->variants->edges[0]->node->legacyResourceId;
 
-            store_product($pid, $request->prodTitle, $request->prodPrice, $request->prodDescription, '', $variant_id, $session->getShop());
+            store_product($pid, $request->prodTitle, $request->prodPrice, $request->prodDescription, $request->prodImgLink, $variant_id, $session->getShop());
             
         } else {
             $success = false;
@@ -326,7 +375,27 @@ Route::get('/api/gift/layout', function (Request $request) {
         </div>';
     }
     
-    return response()->json(["success" => $success, "gift_layout" => $dataStr, 'product_id' => $prodID, 'product_title' => $prodTitle ], $code);
+    return response()->json(["success" => $success, "gift_layout" => $dataStr, 'product_id' => $prodID, 'product_title' => $prodTitle, 'product_price' => $prodData->product_price ], $code);
+    
+});
+
+Route::post('/api/gift/clicks', function (Request $request) {
+    /** @var AuthSession */
+    
+    print_r($request->get('shopifySession')); // Provided by the shopify.auth middleware, guaranteed to be active
+    
+    store_clicks($request->shop, $request->gift_id);
+
+    return response()->json($request);
+    
+});
+
+Route::post('/api/gift/addcart', function (Request $request) {
+    /** @var AuthSession */
+        
+    store_add_to_cart_gift($request->shop, $request->gift_id, $request->product_id);
+
+    return response()->json($request);
     
 });
 
@@ -361,8 +430,60 @@ function get_product($shop_name) {
     $dbSession = GiftProduct::where ('shop', '=', $shop_name)->first();
 
     if ($dbSession->exists) {
+        return $dbSession->script_tag_active;
+    }
+
+    return false;
+}
+
+function is_script_tag($shop_name) {
+    
+    $dbSession = Session::where ('shop', '=', $shop_name)->first();
+
+    if ($dbSession->exists) {
         return $dbSession;
     }
 
     return false;
+}
+
+function store_clicks($shop, $gid) {
+    
+    $dbSession = AphClick::where ('shop', '=', $shop)->first();
+
+    if (!$dbSession) {
+        $dbSession = new AphClick();
+        $dbSession->gift_id = $gid;
+        $dbSession->clicks = 1;
+        $dbSession->shop = $shop;
+    } else {
+        $dbSession->clicks += 1;
+    }
+
+    try {
+        $dbSession->save();
+        return 'Data saved';
+    } catch (Exception $err) {
+        return 'Something went wrong!';
+    }
+
+    return 'Data saved';;
+}
+
+function store_add_to_cart_gift($shop, $gid, $pid) {
+    
+    $dbSession = new AphGiftCartInsight();
+    $dbSession->gift_id = $gid;
+    $dbSession->product_id = $pid;
+    $dbSession->add_to_cart = 1;
+    $dbSession->shop = $shop;
+    
+    try {
+        $dbSession->save();
+        return 'Data saved';
+    } catch (Exception $err) {
+        return 'Something went wrong!';
+    }
+
+    return 'Data saved';;
 }

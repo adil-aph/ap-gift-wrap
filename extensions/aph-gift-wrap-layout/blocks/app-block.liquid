@@ -1,0 +1,16 @@
+{% if request.page_type == 'product' %}
+  {% render "app_snippet" %}
+{% endif %}
+
+{% schema %}
+  {
+    "name": "APH Gift Wrap Settings",
+    "target": "section",
+    "stylesheet": "aph-app.css",
+    "javascript": "aph-app.js",
+    "settings": [
+        { "label": "Color", "id": "color", "type": "color", "default": "#000000" },
+        { "label": "Gift Product", "id": "product", "type": "product" }
+    ]
+  }
+{% endschema %}

@@ -22,7 +22,7 @@ export default function App() {
               navigationLinks={[
                 {
                   label: "Dashboard",
-                  destination: "/pagename",
+                  destination: "/aphdashboard",
                 },
               ]}
             />

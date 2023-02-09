@@ -1,5 +1,5 @@
 {
-  "name": "aph-gift-app",
+  "name": "aph-gift-pp",
   "version": "1.0.0",
   "license": "UNLICENSED",
   "scripts": {
@@ -12,8 +12,8 @@
     "info": "shopify app info"
   },
   "dependencies": {
-    "@shopify/app": "3.21.0",
-    "@shopify/cli": "3.21.0"
+    "@shopify/app": "^3.39.0",
+    "@shopify/cli": "^3.39.0"
   },
-  "author": "Xperts"
+  "author": "Adil"
 }

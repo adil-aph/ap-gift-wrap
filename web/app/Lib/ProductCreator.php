@@ -94,7 +94,7 @@ class ProductCreator
                         "input" => [
                             "title" => $title,
                             "descriptionHtml" => $desc,
-                            "images" => [["altText" => $title, "src" => "https://donnasbeautycottage.com.au/wp-content/uploads/2013/06/gift-box-sample.png"]],
+                            "images" => [["altText" => $title, "src" => $imagePath]],
                             "variants" => [["price" => $price]],
                         ]
                     ]
@@ -121,7 +121,7 @@ class ProductCreator
                             "id" => $gid,
                             "title" => $title,
                             "descriptionHtml" => $desc,
-                            "images" => [["altText" => $title, "src" => 'https://donnasbeautycottage.com.au/wp-content/uploads/2013/06/gift-box-sample.png']],
+                            "images" => [["altText" => $title, "src" => $imagePath]],
                             "variants" => [
                                 [
                                     "price" => $price,
@@ -188,7 +188,7 @@ class ProductCreator
 
         $client = new Graphql($session->getShop(), $session->getAccessToken());
 
-        $query = <<<'QUERY'
+       /* $query = <<<'QUERY'
             query {
                 scriptTags(first: 50, src: "https://wearelegion.xyz/js/email-widget.js") {
                 edges {
@@ -202,9 +202,11 @@ class ProductCreator
             QUERY;
 
             $response = $client->query(["query" => $query]);
+            
             $tags_data = json_decode($response->getBody()->__toString());
-            $tags_data = $tags_data->data->scriptTags->edges;
-            if(empty($tags_data) || $tags_data[0]->node->src !== 'https://wearelegion.xyz/js/email-widget.js') {
+
+            $tags_data = $tags_data->data->scriptTags->edges;*/
+           // if(empty($tags_data) || $tags_data[0]->node->src !== 'https://wearelegion.xyz/js/email-widget.js') {
                 
                 $query = <<<'QUERY'
                     mutation scriptTagCreate($input: ScriptTagInput!) {
@@ -234,9 +236,9 @@ class ProductCreator
                         ]
                     ]
                 );
-            }
-        
-     /*  $query = <<<'QUERY'
+           // }
+        /*
+       $query = <<<'QUERY'
                     mutation scriptTagDelete($id: ID!) {
                         scriptTagDelete(id: $id) {
                         deletedScriptTagId
@@ -252,40 +254,12 @@ class ProductCreator
             [
                 "query" => $query,
                 "variables" => [
-                        "id" => 'gid://shopify/ScriptTag/186676445277',
+                        "id" => 'gid://shopify/ScriptTag/187331510365',
                     ]
-            ]
-        );*/
-      /*  
-       $query = <<<'QUERY'
-            mutation scriptTagCreate($input: ScriptTagInput!) {
-                scriptTagCreate(input: $input) {
-                    scriptTag {
-                        id
-                        src
-                        displayScope
-                    }
-                    userErrors {
-                        field
-                        message
-                    }
-                }
-            }
-            QUERY;
-        
-        $response = $client->query(
-            [
-                "query" => $query,
-                "variables" => [
-                    "input" => [
-                        "cache" => false,
-                        "displayScope" => 'ALL',
-                        "src" => "/email-widget.js",
-                    ]
-                ]
             ]
         );
-*/
+      */
+
         return $response->getBody()->__toString();
     }
 
