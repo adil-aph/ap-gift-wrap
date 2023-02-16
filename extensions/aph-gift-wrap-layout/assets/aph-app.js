@@ -16,6 +16,7 @@ if (giftHTML != null) {
         xmlhttp.onload = function () {
             let resData = JSON.parse(this.responseText);
             document.getElementById("gift_product_price").innerHTML = resData.product_price;
+            document.getElementById("gift_image").src = resData.product_image;
             prod_id = resData.product_id;
             prod_title = resData.product_title;
         };
@@ -33,12 +34,21 @@ if (giftHTML != null) {
          * Save to Database
          */
         let aph_gift_check_elem = document.getElementById("giftWrapOption"); 
-        aph_gift_check_elem.onclick = function(e){
+        let aph_gift_textarea = document.getElementById("giftWrapText"); 
+        
+        aph_gift_check_elem.onchange = function(e){
             alert('click');
+            if(aph_gift_check_elem != null && aph_gift_check_elem.checked == true) {
+                console.log('onchange ', e);
+                aph_gift_textarea.style.display = 'block';
+            } else {
+                aph_gift_textarea.style.display = 'none';
+            }
+            
             var tmp_data = new FormData();
             tmp_data.append('gift_id', prod_id);
 
-            aph_general_xmlhttp(xmlhttp, "post", "https://163c-86-98-222-8.eu.ngrok.io/api/gift/clicks/", tmp_data);
+            aph_general_xmlhttp(xmlhttp, "post", "https://e035-94-204-157-164.in.ngrok.io/api/gift/clicks/", tmp_data);
           }
           
 
@@ -60,6 +70,7 @@ window.fetch = async (...args) => {
     if (giftBoxOption != null && giftBoxOption.checked == true) {
         console.log("CHECKED TRUE");
         let title_p = document.getElementsByTagName("h1")[0].innerHTML;
+        let gifttext = document.getElementById("gifttext").value;
 
         // request interceptor here
         console.log("res  ", resource);
@@ -70,11 +81,12 @@ window.fetch = async (...args) => {
                 args[1].body instanceof String
             ) {
                 let jsonbody = JSON.parse(args[1].body);
+                
                 let temparr = [
                     {
                         quantity: 1,
                         id: prod_id,
-                        properties: { Product: title_p },
+                        properties: { 'Product Name': title_p, 'Your Custom Note': gifttext },
                     },
                 ];
                 console.log("JSON 1", jsonbody);
@@ -86,14 +98,21 @@ window.fetch = async (...args) => {
             } else {
                 args[1].body.append("items[0][quantity]", 1);
                 args[1].body.append("items[0][id]", prod_id);
-                args[1].body.append("items[0][properties][Product]", title_p);
+                args[1].body.append("items[0][properties][Product Name]", title_p);
+                if(gifttext.length){
+                    args[1].body.append("items[0][properties][Your Custom Note]", gifttext);
+                }
+                if (giftInvoice != null && giftInvoice.checked == true) {
+                    args[1].body.append("items[0][properties][Gift Receipt]", giftInvoice.value);
+                }
+
             }
             console.log("fdata ", args[1].body);
             setTimeout(() => {
                 var tmp_data = new FormData();
                 tmp_data.append('gift_id', prod_id);
                 tmp_data.append('product_id', pro_id);
-                aph_general_xmlhttp(xmlhttp, "post", "https://163c-86-98-222-8.eu.ngrok.io/api/gift/addcart/", tmp_data);
+                aph_general_xmlhttp(xmlhttp, "post", "https://e035-94-204-157-164.in.ngrok.io/api/gift/addcart/", tmp_data);
             }, 2000);
         }
     }

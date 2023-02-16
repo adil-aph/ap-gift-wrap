@@ -22,6 +22,7 @@ use Shopify\Utils;
 use Shopify\Webhooks\Registry;
 use Shopify\Webhooks\Topics;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 
 /*
@@ -399,6 +400,47 @@ Route::post('/api/gift/addcart', function (Request $request) {
     
 });
 
+Route::get('/api/gift/insights', function (Request $request) {
+    
+    $session = $request->get('shopifySession'); // Provided by the shopify.auth middleware, guaranteed to be active
+
+    $dbSessionClicks = AphClick::where ('shop', '=', $session->getShop())->first();
+    $dbSessionCarts = AphGiftCartInsight::where ('shop', '=', $session->getShop())->get();
+
+    $gift_clicks = 0;
+    $gift_cart = '';
+    if ($dbSessionClicks->exists) {
+        $gift_clicks = $dbSessionClicks->clicks;
+    }
+    if(!empty($dbSessionCarts)) {
+        $gift_cart = $dbSessionCarts;
+    }
+    return response()->json(['success' => true, 'giftClicks' => $gift_clicks, 'giftInsight' => $gift_cart]);
+    
+})->middleware('shopify.auth');
+
+Route::get('/api/gift/insights/{start_date}/{end_date}', function (Request $request, $start_date, $end_date) {
+    
+    $session = $request->get('shopifySession'); // Provided by the shopify.auth middleware, guaranteed to be active
+
+    $dateS = new Carbon($start_date);
+    $dateE = new Carbon($end_date);
+
+    $dbSessionClicks = AphClick::where ('shop', '=', $session->getShop())->first();
+    $dbSessionCarts = AphGiftCartInsight::where ('shop', '=', $session->getShop())->whereBetween('created_at', [$dateS->format('Y-m-d')." 00:00:00", $dateE->format('Y-m-d')." 23:59:59"])->get();
+
+    $gift_clicks = 0;
+    $gift_cart = '';
+    if ($dbSessionClicks->exists) {
+        $gift_clicks = $dbSessionClicks->clicks;
+    }
+    if(!empty($dbSessionCarts)) {
+        $gift_cart = $dbSessionCarts;
+    }
+    return response()->json(['success' => true, 'giftClicks' => $gift_clicks, 'giftInsight' => $gift_cart]);
+    
+})->middleware('shopify.auth');
+
 function store_product($pgid, $ptitle, $pprice, $pdesc, $pimg, $vid, $shop_name) {
 
    // $dbSession = GiftProduct::find(1);
@@ -430,7 +472,7 @@ function get_product($shop_name) {
     $dbSession = GiftProduct::where ('shop', '=', $shop_name)->first();
 
     if ($dbSession->exists) {
-        return $dbSession->script_tag_active;
+        return $dbSession;
     }
 
     return false;
@@ -441,7 +483,7 @@ function is_script_tag($shop_name) {
     $dbSession = Session::where ('shop', '=', $shop_name)->first();
 
     if ($dbSession->exists) {
-        return $dbSession;
+        return $dbSession->script_tag_active;
     }
 
     return false;

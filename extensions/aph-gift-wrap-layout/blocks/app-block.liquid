@@ -2,6 +2,16 @@
   {% render "app_snippet" %}
 {% endif %}
 
+{% if request.page_type == 'cart' %}
+  <script>
+    fetch(window.Shopify.routes.root + 'cart.js')
+      .then(response => response.json())
+      .then( data => { 
+        console.log('contewnte ', data);
+      });
+  </script>
+{% endif %}
+
 {% schema %}
   {
     "name": "APH Gift Wrap Settings",

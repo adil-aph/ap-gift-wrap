@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@shopify/app": "^3.39.0",
-    "@shopify/cli": "^3.39.0"
+    "@shopify/cli": "^3.39.0",
+    "@shopify/polaris-viz": "^8.0.4"
   },
   "author": "Adil"
 }
