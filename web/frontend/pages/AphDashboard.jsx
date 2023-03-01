@@ -10,16 +10,16 @@ import { LineChart } from '@shopify/polaris-viz';
 import { TitleBar } from "@shopify/app-bridge-react";
 import { useAuthenticatedFetch } from "../hooks";
 
-import apptutorial from "../assets/apptutorial.gif";
+import { ClickDataTable } from "../components/ClickDataTable";
+import { ClickDataChart } from "../components/ClickDataChart";
+import { CartDataChart } from "../components/CartDataChart";
+import { CartDataTable } from "../components/CartDataTable";
 
 import "../assets/appStyle.css";
 
-
 export default function AphDashboard() {
-
   const now = new Date();
   const fetch = useAuthenticatedFetch();
-  const [appInstructions, setAppInstructions] = useState(false);
   const [giftClicks, setGiftClicks] = useState(0);
   const [giftCarts, setGiftCarts] = useState(0);
   const [{month, year}, setDate] = useState({month: now.getMonth(), year: now.getFullYear()});
@@ -28,72 +28,22 @@ export default function AphDashboard() {
     start: new Date('Wed Feb 07 2018 00:00:00 GMT-0500 (EST)'),
     end: new Date('Mon Mar 12 2018 00:00:00 GMT-0500 (EST)'),
   });
-  const SHARK_SPECIES_GROWTH = [
-    {
-      name: 'Mako',
-      data: [
-        {
-          key: '0',
-          value: 80,
-        },
-        {
-          key: '5',
-          value: 170,
-        },
-        {
-          key: '10',
-          value: 210,
-        },
-        {
-          key: '15',
-          value: 240,
-        },
-      ],
-    },
-    {
-      name: 'Great White',
-      data: [
-        {
-          key: '0',
-          value: 80,
-        },
-        {
-          key: '5',
-          value: 180,
-        },
-        {
-          key: '10',
-          value: 250,
-        },
-        {
-          key: '15',
-          value: 350,
-        },
-      ],
-    },
-  ];
+  const [clicksData, setClicksData] = useState([[]]);
+  const [cartsData, setCartsData] = useState([[]]);
+
   // Similar to componentDidMount and componentDidUpdate:
   useEffect(() => {
-
-    // Check Theme is it 2.0 or vintage
-    fetch('/api/gift/gettheme')
-    .then(response => {
-      return response.json();
-    })
-    .then(resp => {
-      console.log('res tag ', resp);
-      setAppInstructions(resp.isTag);
-    });
-
-    // Check Theme is it 2.0 or vintage
+    // Get default data on load
     fetch('/api/gift/insights/')
     .then(response => {
       return response.json();
     })
     .then(resp => {
       console.log('res insights ', resp);
-      setGiftClicks(resp.giftClicks);
-      setGiftCarts(resp.giftInsight.length);
+      setGiftCarts(resp.giftInsight[0][1]);
+      setGiftClicks(resp.giftClicks[0][1]);
+      setClicksData(resp.giftClicks);
+      setCartsData(resp.giftInsight);
     });
 
   }, []);
@@ -110,8 +60,10 @@ export default function AphDashboard() {
     })
     .then(resp => {
       console.log('res insights ', resp);
-      setGiftClicks(resp.giftClicks);
-      setGiftCarts(resp.giftInsight.length);
+      setGiftClicks(resp.giftClicksTotal);
+      setGiftCarts(resp.giftInsightTotal);
+      setClicksData(resp.giftClicks);
+      setCartsData(resp.giftInsight);
     });
     togglePopoverActive();
   }
@@ -185,40 +137,12 @@ export default function AphDashboard() {
         </Layout.Section>
         <Layout.Section>
           <Card sectioned>
-            <Heading>APP Settings</Heading>
-            <TextContainer>
-              <div className="" style={{display: appInstructions ? 'none' : 'block'}}>
-                    <p>
-                      In order for APH Gift Wrap Options to work properly in your OS 2.0 theme, you'll have to add it as a block from the Theme Customizer.
-                      <u><b> Don't forget to click on the Save button!</b></u>
-                    </p>
-                    <p style={{'textAlign': 'center', 'marginTop': '15px'}}>
-                      <img src={apptutorial} style={{ width: '70%'}} />
-                    </p>
-              </div>
-              <div className="" style={{display: appInstructions ? 'block' : 'none'}}>
-                    A Script Tag will automatically added to the store to handle the front end functionality.
-              </div>
-            </TextContainer>
-          </Card>
-          <Card sectioned>
             <Heading>Add To Cart</Heading>
             <TextContainer>
               <h4>{giftCarts}</h4>
-              <LineChart
-                xAxisOptions={{
-                  labelFormatter: (x) => {
-                    return `${x} years old`
-                  }
-                }}
-                yAxisOptions={{
-                  labelFormatter: (y) => {
-                    return `${y} cm`
-                  }
-                }}
-                data={SHARK_SPECIES_GROWTH}
-              />
             </TextContainer>
+            <CartDataTable insightdata={cartsData} />
+            <CartDataChart insightdata={cartsData} />
           </Card>
         </Layout.Section>
         <Layout.Section secondary>
@@ -228,6 +152,8 @@ export default function AphDashboard() {
               <h4>{giftClicks}</h4>
             </TextContainer>
           </Card>
+          <ClickDataTable insightdata={clicksData} />
+          <ClickDataChart insightdata={clicksData} />
         </Layout.Section>
       </Layout>
     </Page>

@@ -14,6 +14,7 @@
 	padding: 5px;
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 }
 .giftcart-col-first {
 	padding-right: 10px;
@@ -31,12 +32,15 @@
 .displaynone {
 	display : none;
 }
-.giftcart-col-first {
+.giftcart-col-first img {
+	width: 100%;
+}
+/*.giftcart-col-first {
 	width: 30%;
 }
 .giftcart-col-secound {
 	width: 70%;
-}
+}*/
 .giftcart-col-secound h4 {
 	font-size: 1.13333em;
 	margin-bottom: 0px;
@@ -45,7 +49,7 @@
 	display: inline-block;
 	margin: 8px 0;
 	width: 100%;
-	min-height: 100px !important;
+	min-height: 70px !important;
 	resize: none;
 }
 #giftWrapHead {
@@ -132,4 +136,8 @@ input[type='checkbox']::before {
 input[type='checkbox']:checked::before {
 	-webkit-transform: scale(1);
 	transform: scale(1);
+}
+.gift-response {
+	color: red;
+	font-size: 12px;
 }

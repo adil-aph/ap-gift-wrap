@@ -21,10 +21,11 @@ return [
         "required" => false,
 
         // Example set of values to create a charge for $5 one time
-        "chargeName" => "My Shopify App One-Time Billing",
+        "chargeName" => "Gift Wrap App Monthly Billing",
         "amount" => 5.0,
         "currencyCode" => "USD", // Currently only supports USD
-        "interval" => EnsureBilling::INTERVAL_ONE_TIME,
+        "interval" => EnsureBilling::INTERVAL_EVERY_30_DAYS,
+        'test' => true
     ],
 
 ];

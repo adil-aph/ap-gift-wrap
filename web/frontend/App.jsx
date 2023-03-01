@@ -23,6 +23,10 @@ export default function App() {
               <NavigationMenu
                 navigationLinks={[
                   {
+                    label: "Gift Product",
+                    destination: "/aphproduct",
+                  },
+                  {
                     label: "Dashboard",
                     destination: "/aphdashboard",
                   },

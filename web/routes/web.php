@@ -8,6 +8,7 @@ use App\Models\Session;
 use \App\Models\GiftProduct;
 use \App\Models\AphClick;
 use \App\Models\AphGiftCartInsight;
+use \App\Models\AphPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
@@ -23,7 +24,6 @@ use Shopify\Webhooks\Registry;
 use Shopify\Webhooks\Topics;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
-
 
 /*
 |--------------------------------------------------------------------------
@@ -58,6 +58,7 @@ Route::get('/api/auth', function (Request $request) {
 });
 
 Route::get('/api/auth/callback', function (Request $request) {
+    
     $session = OAuth::callback(
         $request->cookie(),
         $request->query(),
@@ -69,6 +70,7 @@ Route::get('/api/auth/callback', function (Request $request) {
 
     $response = Registry::register('/api/webhooks', Topics::APP_UNINSTALLED, $shop, $session->getAccessToken());
     if ($response->isSuccess()) {
+        //Session::where('shop', $shop)->delete();
         Log::debug("Registered APP_UNINSTALLED webhook for shop $shop and host $host");
     } else {
         Log::error(
@@ -78,13 +80,13 @@ Route::get('/api/auth/callback', function (Request $request) {
     }
 
     $redirectUrl = Utils::getEmbeddedAppUrl($host);
-    if (Config::get('shopify.billing.required')) {
-        list($hasPayment, $confirmationUrl) = EnsureBilling::check($session, Config::get('shopify.billing'));
+    /*if (Config::get('shopify.billing.required')) {
 
         if (!$hasPayment) {
+            list($hasPayment, $confirmationUrl) = EnsureBilling::check($session, Config::get('shopify.billing'));
             $redirectUrl = $confirmationUrl;
         }
-    }
+    }*/
 
     return redirect($redirectUrl);
 });
@@ -112,6 +114,8 @@ Route::get('/api/gift/gettheme', function (Request $request) {
     $ret_str = '';
     $is_tag = false;
      
+    $sts = Session::where('shop', '=', $session->getShop())->first();
+
     foreach($themes['themes'] as $theme) {
         if ($theme['role'] === 'main') {
             $published_theme = $theme['id'];
@@ -143,7 +147,7 @@ Route::get('/api/gift/gettheme', function (Request $request) {
         $is_tag = true;
     }
 
-    return response()->json(["isTag" => $is_tag,"success" => true, "error" => '', "message" => $ret_str]);
+    return response()->json(["isTag" => $is_tag, "success" => true, "error" => '', "message" => $ret_str, "app_status" => $sts->app_status]);
 })->middleware('shopify.auth');
 
 Route::get('/api/products/create', function (Request $request) {
@@ -191,9 +195,10 @@ Route::post('/api/gift/create', function (Request $request) {
         
         $proResp = json_decode($proResp);
         $pid = $proResp->data->productCreate->product->id;
+        $p_slug = $proResp->data->productCreate->product->handle;
         $variant_id = $proResp->data->productCreate->product->variants->edges[0]->node->legacyResourceId;
 
-        store_product($pid, $request->prodTitle, $request->prodPrice, $request->prodDescription, $request->prodImgLink, $variant_id, $session->getShop());
+        store_product($pid, $request->prodTitle, $request->prodPrice, $request->prodDescription, $request->prodImgLink, $variant_id, $session->getShop(), $p_slug);
         
     } catch (\Exception $e) {
         $success = false;
@@ -236,8 +241,8 @@ Route::post('/api/gift/update', function (Request $request) {
             $proResp = json_decode($proResp);
             $pid = $proResp->data->productUpdate->product->id;
             $variant_id = $proResp->data->productUpdate->product->variants->edges[0]->node->legacyResourceId;
-
-            store_product($pid, $request->prodTitle, $request->prodPrice, $request->prodDescription, $request->prodImgLink, $variant_id, $session->getShop());
+            $p_slug = $proResp->data->productUpdate->product->handle;
+            store_product($pid, $request->prodTitle, $request->prodPrice, $request->prodDescription, $request->prodImgLink, $variant_id, $session->getShop(), $p_slug);
             
         } else {
             $success = false;
@@ -346,16 +351,19 @@ Route::get('/api/gift/settag', function (Request $request) {
 Route::get('/api/gift/layout', function (Request $request) {
 
     $prodData = get_product($request->shop);
-
+    $sts = Session::where('shop', '=', $request->shop)->first();
     $success = true;
     $code = 200;
     $dataStr = '';
     $prodID = 0;
     $prodTitle = '';
+    $prodSlug = '';
+    $prodAppStatus = $sts->app_status;
 
     if ($prodData) {
         $prodID = $prodData->variant_id;
         $prodTitle = $prodData->product_title;
+        $prodSlug = $prodData->product_slug;
         $dataStr = '
             <div class="only_us" style="margin-bottom: 20px;">
             <p class="gift_head_top">
@@ -376,15 +384,19 @@ Route::get('/api/gift/layout', function (Request $request) {
         </div>';
     }
     
-    return response()->json(["success" => $success, "gift_layout" => $dataStr, 'product_id' => $prodID, 'product_title' => $prodTitle, 'product_price' => $prodData->product_price ], $code);
+    return response()->json(
+        [
+            "success" => $success, "gift_layout" => $dataStr, 
+            "product_id" => $prodID, "product_title" => $prodTitle, 
+            "product_price" => $prodData->product_price, "product_slug" => $prodSlug, 
+            "product_image" => $prodData->Product_image, "app_status" => $prodAppStatus 
+        ], $code);
     
 });
 
 Route::post('/api/gift/clicks', function (Request $request) {
     /** @var AuthSession */
-    
-    print_r($request->get('shopifySession')); // Provided by the shopify.auth middleware, guaranteed to be active
-    
+        
     store_clicks($request->shop, $request->gift_id);
 
     return response()->json($request);
@@ -404,16 +416,17 @@ Route::get('/api/gift/insights', function (Request $request) {
     
     $session = $request->get('shopifySession'); // Provided by the shopify.auth middleware, guaranteed to be active
 
-    $dbSessionClicks = AphClick::where ('shop', '=', $session->getShop())->first();
-    $dbSessionCarts = AphGiftCartInsight::where ('shop', '=', $session->getShop())->get();
-
-    $gift_clicks = 0;
-    $gift_cart = '';
-    if ($dbSessionClicks->exists) {
-        $gift_clicks = $dbSessionClicks->clicks;
+    $dbSessionClicks = AphClick::where ('shop', '=', $session->getShop())->get()->toArray();
+    $dbSessionCarts = AphGiftCartInsight::where ('shop', '=', $session->getShop())->get()->toArray();
+    $gift_clicks = [];
+    $gift_cart = [];
+    if (!empty($dbSessionClicks)) {
+        $gift_clicks[0][0] = 'All';
+        $gift_clicks[0][1] = array_sum(array_column($dbSessionClicks,'clicks'));
     }
     if(!empty($dbSessionCarts)) {
-        $gift_cart = $dbSessionCarts;
+        $gift_cart[0][0] = 'All';
+        $gift_cart[0][1] = array_sum(array_column($dbSessionCarts,'add_to_cart'));
     }
     return response()->json(['success' => true, 'giftClicks' => $gift_clicks, 'giftInsight' => $gift_cart]);
     
@@ -426,22 +439,122 @@ Route::get('/api/gift/insights/{start_date}/{end_date}', function (Request $requ
     $dateS = new Carbon($start_date);
     $dateE = new Carbon($end_date);
 
-    $dbSessionClicks = AphClick::where ('shop', '=', $session->getShop())->first();
-    $dbSessionCarts = AphGiftCartInsight::where ('shop', '=', $session->getShop())->whereBetween('created_at', [$dateS->format('Y-m-d')." 00:00:00", $dateE->format('Y-m-d')." 23:59:59"])->get();
-
-    $gift_clicks = 0;
-    $gift_cart = '';
-    if ($dbSessionClicks->exists) {
-        $gift_clicks = $dbSessionClicks->clicks;
+    $dbSessionClicks = AphClick::where ('shop', '=', $session->getShop())->whereBetween('created_at', [$dateS->format('Y-m-d')." 00:00:00", $dateE->format('Y-m-d')." 23:59:59"])->get()->toArray();
+    $dbSessionCarts = AphGiftCartInsight::where ('shop', '=', $session->getShop())->whereBetween('created_at', [$dateS->format('Y-m-d')." 00:00:00", $dateE->format('Y-m-d')." 23:59:59"])->get()->toArray();
+    $gift_clicks = [];
+    $gift_clicks_total = 0;
+    $gift_cart_total = 0;
+    $gift_cart = [];
+    if (!empty($dbSessionClicks)) {
+        $gift_clicks_total = array_sum(array_column($dbSessionClicks,'clicks'));
+        foreach($dbSessionClicks as $clickSess){
+            $tmpDate = new Carbon($clickSess['created_at']);
+            $gift_clicks[] = [$tmpDate->format("Y-m-d"), $clickSess['clicks']];
+        }
     }
     if(!empty($dbSessionCarts)) {
-        $gift_cart = $dbSessionCarts;
+        $gift_cart_total = array_sum(array_column($dbSessionCarts,'add_to_cart'));
+        foreach($dbSessionCarts as $cartSess){
+            $tmpDate = new Carbon($cartSess['created_at']);
+            $gift_cart[] = [$tmpDate->format("Y-m-d"), $cartSess['add_to_cart'], $cartSess['product_id']];
+        }
     }
-    return response()->json(['success' => true, 'giftClicks' => $gift_clicks, 'giftInsight' => $gift_cart]);
+    return response()->json(['success' => true, 'giftClicksTotal' => $gift_clicks_total, 'giftClicks' => $gift_clicks, 'giftInsightTotal' => $gift_cart_total, 'giftInsight' => $gift_cart]);
     
 })->middleware('shopify.auth');
 
-function store_product($pgid, $ptitle, $pprice, $pdesc, $pimg, $vid, $shop_name) {
+Route::get('/api/billing/charge', function (Request $request) {
+    $session = $request->get('shopifySession');
+    $config = [];
+    $confirmationUrl = EnsureBilling::getPaymentURL($session, Config::get('shopify.billing'));
+
+    return response()->json(['success' => true, 'red_link' => $confirmationUrl]);
+})->middleware('shopify.auth');;
+
+Route::get('/api/billing/status', function (Request $request) {
+   
+    $session = $request->get('shopifySession');
+   // die('working');
+    $dbSession = AphPayment::where ('shop', '=', $session->getShop())
+                            ->where('status', '=', 'active')->first();
+    if (!$dbSession) {
+        $confirmationUrl = EnsureBilling::getPaymentURL($session, Config::get('shopify.billing'));
+        return response()->json(['success' => true, 'payment_status' => false, 'red_link' => $confirmationUrl]);
+    }
+
+    return response()->json(['success' => true, 'payment_status' => true]);
+})->middleware('shopify.auth');
+
+Route::get('/api/billing/confirm', function (Request $request) {
+    
+    $hostName = Context::$HOST_NAME;
+    $host = $request->query('host');
+    $shop = Utils::sanitizeShopDomain($request->query('shop'));
+    $returnUrl = "https://$hostName?shop={$shop}&host=$host";
+
+    if ($request->charge_id) {
+        $dbSession = AphPayment::where('shop', '=', $shop)->first();
+        if (!$dbSession) {
+            $dbSession = new AphPayment();
+        }
+        $dbSession->charge_id = $request->charge_id;
+        $dbSession->shop = $shop;
+        $dbSession->status = 'active';
+        $dbSession->save();
+    }
+
+    $tmpData = json_encode($request->all());
+
+    Log::error("Charged ID 3: {$request->charge_id} SHOP: {$shop} DATA: {$tmpData}");
+    return Redirect::to($returnUrl);
+
+});
+
+Route::get('/api/billing/cancel', function (Request $request) {
+    $session = $request->get('shopifySession');
+   
+    $dbSession = AphPayment::where ('shop', '=', $session->getShop())->first();
+    if (!$dbSession) {
+        return response()->json(['success' => true, 'payment_status' => false, 'message' => 'No Record found!']);
+    }
+
+    $dbSession2 = Session::where ('shop', '=', $session->getShop())->first();
+    if (!$dbSession2) {
+        return response()->json(['success' => true, 'payment_status' => false, 'message' => 'No Record found!']);
+    }
+
+    // else 
+    $charge_id = $dbSession->charge_id;
+
+    $res_qry = EnsureBilling::cancelRecurringPayment($session, $charge_id);
+    $dbSession->status = 'deactive';
+    $dbSession->save();
+
+    $dbSession2->app_status = 'deactive';
+    $dbSession2->save();
+
+    return response()->json(['success' => true, 'payment_status' => false, 'message' => 'Plan Cancelled Successfully!']);
+})->middleware('shopify.auth');
+
+Route::get('/api/app/status/{current_status}', function (Request $request, $current_status) {
+    $session = $request->get('shopifySession');
+    $dbSession = Session::where ('shop', '=', $session->getShop())->first();
+    if (!$dbSession) {
+        return response()->json(['success' => true, 'app_status' => false ]);
+    }
+
+    $dbSession->app_status = $current_status;
+    $dbSession->save();
+
+    return response()->json([
+        'success' => true, 
+        'app_status' => ($current_status == 'active') ? true : false,
+        'message' => "App's widget $current_status successfully!",
+        'app_status_val' => $current_status
+    ]);
+})->middleware('shopify.auth');
+
+function store_product($pgid, $ptitle, $pprice, $pdesc, $pimg, $vid, $shop_name, $p_slug) {
 
    // $dbSession = GiftProduct::find(1);
    $dbSession = GiftProduct::where ('shop', '=', $shop_name)->first();
@@ -456,6 +569,7 @@ function store_product($pgid, $ptitle, $pprice, $pdesc, $pimg, $vid, $shop_name)
     $dbSession->Product_image = $pimg;
     $dbSession->variant_id = $vid;
     $dbSession->shop = $shop_name;
+    $dbSession->product_slug = $p_slug;
 
     try {
         return $dbSession->save();
@@ -491,8 +605,11 @@ function is_script_tag($shop_name) {
 
 function store_clicks($shop, $gid) {
     
-    $dbSession = AphClick::where ('shop', '=', $shop)->first();
-
+    $date = Carbon::today(); // Replace with your desired date
+    $dbSession = AphClick::where ('shop', '=', $shop)
+                           ->where('created_at', '>=', $date->format('Y-m-d')." 00:00:00")
+                           ->where('created_at', '<=', $date->format('Y-m-d')." 23:59:59")
+                           ->first();
     if (!$dbSession) {
         $dbSession = new AphClick();
         $dbSession->gift_id = $gid;

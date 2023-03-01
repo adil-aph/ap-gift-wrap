@@ -1,4 +1,4 @@
-console.log("WELCOM TO THEME EXTENSIOn");
+console.log("WELCOM TO THEME EXTENSION");
 
 const xmlhttp = new XMLHttpRequest();
 
@@ -8,25 +8,51 @@ var cartObj = [];
 var tempRes;
 var prod_id;
 var prod_title;
+var prod_slug;
+var product_price = '';
+var product_image;
+const baseURL = 'https://bde2-94-205-107-178.in.ngrok.io';
+
+/**
+ * Send HTTP request to get Gift Product data 
+ */
+
+
+
+if (window.location.href.indexOf('cart') === -1) {
+    console.log('This is a cart page');
+    xmlhttp.onload = function () {
+        let resData = JSON.parse(this.responseText);
+        
+        prod_id = resData.product_id;
+        prod_title = resData.product_title;
+        prod_slug = resData.product_slug;
+        product_price = resData.product_price;
+        product_image = resData.product_image; 
+        document.getElementById("gift_product_price").innerHTML = product_price;
+        if(resData.app_status == 'deactive')
+            document.getElementById("aph_gift_wrap_app").remove();
+        removeGiftProductFront(prod_slug);
+    };
+    
+    xmlhttp.open(
+        "GET",
+        baseURL + "/api/gift/layout?shop=" +
+            Shopify.shop
+    );
+    xmlhttp.send();
+
+    setTimeout(() => {
+        removeGiftProductFront(prod_slug);
+    }, 3000);
+}
 
 var giftHTML = document.getElementById("giftWrapHead"); 
 if (giftHTML != null) {
     if (giftHTML.innerHTML.length) {
-        const xmlhttp = new XMLHttpRequest();
-        xmlhttp.onload = function () {
-            let resData = JSON.parse(this.responseText);
-            document.getElementById("gift_product_price").innerHTML = resData.product_price;
-            document.getElementById("gift_image").src = resData.product_image;
-            prod_id = resData.product_id;
-            prod_title = resData.product_title;
-        };
 
-        xmlhttp.open(
-            "GET",
-            "https://shopify-app.wearelegion.xyz/api/gift/layout?shop=" +
-                Shopify.shop
-        );
-        xmlhttp.send();
+        document.getElementById("gift_product_price").innerHTML = product_price;
+        document.getElementById("gift_image").src = product_image;
 
         /**
          * Capture User's Clicks on Element
@@ -37,7 +63,7 @@ if (giftHTML != null) {
         let aph_gift_textarea = document.getElementById("giftWrapText"); 
         
         aph_gift_check_elem.onchange = function(e){
-            alert('click');
+            //alert('click');
             if(aph_gift_check_elem != null && aph_gift_check_elem.checked == true) {
                 console.log('onchange ', e);
                 aph_gift_textarea.style.display = 'block';
@@ -48,7 +74,7 @@ if (giftHTML != null) {
             var tmp_data = new FormData();
             tmp_data.append('gift_id', prod_id);
 
-            aph_general_xmlhttp(xmlhttp, "post", "https://e035-94-204-157-164.in.ngrok.io/api/gift/clicks/", tmp_data);
+            aph_general_xmlhttp(xmlhttp, "post", baseURL + "/api/gift/clicks/", tmp_data);
           }
           
 
@@ -112,7 +138,7 @@ window.fetch = async (...args) => {
                 var tmp_data = new FormData();
                 tmp_data.append('gift_id', prod_id);
                 tmp_data.append('product_id', pro_id);
-                aph_general_xmlhttp(xmlhttp, "post", "https://e035-94-204-157-164.in.ngrok.io/api/gift/addcart/", tmp_data);
+                aph_general_xmlhttp(xmlhttp, "post", baseURL + "/api/gift/addcart/", tmp_data);
             }, 2000);
         }
     }
@@ -190,7 +216,7 @@ function deleteGift(crtO) {
     if (crtO.length) {
         console.log("crto ", crtO);
         crtO.forEach((item, ind, arr) => {
-            if (item.properties != null && "Product" in item.properties) {
+            if (item.properties != null && "Product Name" in item.properties) {
                 for (let i = ind; i < arr.length; i++) {
                     if (arr[i].product_title === item.properties.Product) {
                         nfIndx = -1;
@@ -301,4 +327,27 @@ function aph_general_xmlhttp(xmlhttpReq, reqMethod, url, data) {
             Shopify.shop
     );
     xmlhttpReq.send(data);
+}
+
+/**
+ * Remove APH Gift Product from store Fornt
+ */
+function removeGiftProductFront(slug) {
+    console.log('slug ', slug);
+    const links = document.querySelectorAll('a[href*="' + slug + '"]');
+
+    for (let i = 0; i < links.length; i++) {
+        const link = links[i];
+        let parent = link.parentNode;
+        while (parent && parent.nodeName !== 'LI') {
+           // parent.parentNode.removeChild(parent);
+            parent = parent.parentNode;
+        }
+        if(parent == null || parent == 'null'){
+            parent = link.parentNode;
+        }
+        parent.remove();
+        //parent.removeChild(link);
+    }
+
 }

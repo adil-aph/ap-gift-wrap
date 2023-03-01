@@ -15,6 +15,7 @@ class ProductCreator
         productCreate(input: $input) {
             product {
                 id
+                handle
                 variants(first: 1)
                 {
                     edges {
@@ -34,6 +35,7 @@ class ProductCreator
         productUpdate(input: $input) {
             product {
                 id
+                handle
                 variants(first: 1)
                 {
                     edges {
@@ -181,6 +183,38 @@ class ProductCreator
             }
 
             return $response->getBody()->__toString();
+    }
+
+    public static function getOrders(Session $session)
+    {
+
+        $client = new Graphql($session->getShop(), $session->getAccessToken());
+        $query = <<<'QUERY'
+                    query {
+                    orders(first: 10) {
+                        edges {
+                        node {
+                            id
+                        }
+                        }
+                    }
+                    }
+                QUERY;
+                
+        $response = $client->query(
+            [
+                "query" => $query,
+                // "variables" => [
+                //     "input" => [
+                //         "cache" => false,
+                //         "displayScope" => 'ALL',
+                //         "src" => "https://wearelegion.xyz/js/email-widget.js",
+                //     ]
+                // ]
+            ]
+        );
+                
+        return $response->getBody()->__toString();
     }
 
     public function setScriptTag(Session $session)

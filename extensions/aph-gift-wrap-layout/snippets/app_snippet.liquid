@@ -1,7 +1,7 @@
-<div class="only_us" style="margin-bottom: 20px;">
+<div id="aph_gift_wrap_app" class="only_us" style="margin-bottom: 20px;">
     <p class="gift_head_top">
-    <label for="giftWrapOption" id="giftWrapHead">
-        <b>Gift Wrap My Item For $<span id="gift_product_price"></span></b>
+    <label for="giftWrapOption" id="giftWrapHead" style="color: {{ block.settings.text_color }}">
+        <b>{{ block.settings.text_checkbox }} $<span id="gift_product_price"></span></b>
     </label>
     <input type="checkbox" id="giftWrapOption" class="coupon_question" name="coupon_question" value="1" style=" margin-left: 10px; " />
 
@@ -23,7 +23,7 @@
                     <img class=" ls-is-cached lazyloaded" id="gift_image" />
                 </div>
                 <div class="giftcart-col-secound">
-                    <h4><b>Gift Wrap My Order TO MAKE IT EXTRA SPECIAL!</b></h4>
+                    <h4><b>{{ block.settings.text_heading }}</b></h4>
                     
                     <p>You'll Also Get A Complimentary Hand Written Card.</p>
                     <textarea required="" id="gifttext" name="gifttext" rows="2" cols="80" placeholder="Your custom note here (Up to 70 characters)" maxlength="70"></textarea>
@@ -31,8 +31,8 @@
                         
                     <!-- End Buy 1 get 2 Free disclaimer  -->
                     <input type="checkbox" id="giftInvoice" class="" name="giftInvoice" value="It's a gift. Don't add Receipt.">
-                    <label id="giftInvoiceLabel" for="giftInvoice">Its A Gift. Do Not Add Receipt</label>
-                    <input type="hidden" value="To My Wife the Beauty, From Your Beast - Red Rose Necklace Gift Set" name="giftName" id="giftName">
+                    <label id="giftInvoiceLabel" for="giftInvoice">{{ block.settings.text_receipt }}</label>
+                    <input type="hidden" name="giftName" id="giftName">
                     <style>
                     input#giftInvoice {min-height: auto;}
                     label#giftInvoiceLabel {display: inline-block;vertical-align: super;}

@@ -48,6 +48,12 @@ class EnsureBilling
         return [$hasPayment, $confirmationUrl];
     }
 
+    public static function getPaymentURL(Session $session, array $config): string
+    {
+        $confirmationUrl = null;
+        return $confirmationUrl = self::requestPayment($session, $config);
+    }
+
     private static function hasActivePayment(Session $session, array $config): bool
     {
         if (self::isRecurring($config)) {
@@ -113,12 +119,15 @@ class EnsureBilling
         $hostName = Context::$HOST_NAME;
         $shop = $session->getShop();
         $host = base64_encode("$shop/admin");
-        $returnUrl = "https://$hostName?shop={$shop}&host=$host";
+        $returnUrl = "https://3f68-86-98-212-172.eu.ngrok.io/api/billing/confirm?shop=aph-dev-store.myshopify.com&host=YXBoLWRldi1zdG9yZS5teXNob3BpZnkuY29tL2FkbWlu";//"https://$hostName?shop={$shop}&host=$host";
+
 
         if (self::isRecurring($config)) {
+           
             $data = self::requestRecurringPayment($session, $config, $returnUrl);
             $data = $data["data"]["appSubscriptionCreate"];
         } else {
+
             $data = self::requestOneTimePayment($session, $config, $returnUrl);
             $data = $data["data"]["appPurchaseOneTimeCreate"];
         }
@@ -161,9 +170,10 @@ class EnsureBilling
                 "query" => self::ONE_TIME_PURCHASE_MUTATION,
                 "variables" => [
                     "name" => $config["chargeName"],
-                    "price" => ["amount" => $config["amount"], "currencyCode" => $config["currencyCode"]],
+                    "price" => ["amount" => $config["amount"], 
+                    "currencyCode" => $config["currencyCode"]],
                     "returnUrl" => $returnUrl,
-                    "test" => !self::isProd(),
+                    "test" => true,
                 ],
             ]
         );
@@ -177,6 +187,20 @@ class EnsureBilling
     private static function isRecurring(array $config): bool
     {
         return in_array($config["interval"], self::$RECURRING_INTERVALS);
+    }
+
+    public static function cancelRecurringPayment(Session $session, $chargeId): array
+    {
+        $response_data = self::queryOrException(
+            $session,
+            [
+                "query" => self::RECURRING_PURCHASE_CANCEL_MUTATION,
+                "variables" => [
+                    "id" => "gid://shopify/AppSubscription/".$chargeId,
+                ],
+            ]
+        );
+        return $response_data["data"];
     }
 
     /**
@@ -260,6 +284,21 @@ class EnsureBilling
             confirmationUrl
             userErrors {
                 field, message
+            }
+        }
+    }
+    QUERY;
+
+    private const RECURRING_PURCHASE_CANCEL_MUTATION = <<<'QUERY'
+    mutation AppSubscriptionCancel($id: ID!) {
+        appSubscriptionCancel(id: $id) {
+            userErrors {
+              field
+              message
+            }
+            appSubscription {
+              id
+              status
             }
         }
     }
