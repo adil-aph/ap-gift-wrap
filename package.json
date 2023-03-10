@@ -1,5 +1,5 @@
-{
-  "name": "aph-gift-pp",
+{ 
+  "name": "giftify-pro-gift-wrap",
   "version": "1.0.0",
   "license": "UNLICENSED",
   "scripts": {
@@ -12,9 +12,9 @@
     "info": "shopify app info"
   },
   "dependencies": {
-    "@shopify/app": "^3.39.0",
-    "@shopify/cli": "^3.39.0",
-    "@shopify/polaris-viz": "^8.0.4"
+    "@shopify/app": "^3.44.1",
+    "@shopify/cli": "^3.44.1",
+    "@shopify/polaris-viz": "^8.1.1"
   },
   "author": "Adil"
 }

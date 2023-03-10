@@ -50,8 +50,15 @@ class EnsureBilling
 
     public static function getPaymentURL(Session $session, array $config): string
     {
-        $confirmationUrl = null;
-        return $confirmationUrl = self::requestPayment($session, $config);
+        $confirmationUrlM = null;
+        return $confirmationUrlM = self::requestPayment($session, $config);
+    }
+
+    public static function getPaymentURLYearly(Session $session, array $config): string
+    {
+        $confirmationUrlY = null;
+        $confirmationUrlY = self::requestPayment($session, $config);
+        return $confirmationUrlY;
     }
 
     private static function hasActivePayment(Session $session, array $config): bool
@@ -259,6 +266,7 @@ class EnsureBilling
             lineItems: $lineItems
             returnUrl: $returnUrl
             test: $test
+            trialDays: 7
         ) {
             confirmationUrl
             userErrors {

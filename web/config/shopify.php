@@ -22,9 +22,19 @@ return [
 
         // Example set of values to create a charge for $5 one time
         "chargeName" => "Gift Wrap App Monthly Billing",
-        "amount" => 5.0,
+        "amount" => 9.99,
         "currencyCode" => "USD", // Currently only supports USD
         "interval" => EnsureBilling::INTERVAL_EVERY_30_DAYS,
+        'test' => true
+    ],
+    "billing_yearly" => [
+        "required" => false,
+
+        // Example set of values to create a charge for $5 one time
+        "chargeName" => "Gift Wrap App Yearly Billing",
+        "amount" => 99.99,
+        "currencyCode" => "USD", // Currently only supports USD
+        "interval" => EnsureBilling::INTERVAL_ANNUAL,
         'test' => true
     ],
 

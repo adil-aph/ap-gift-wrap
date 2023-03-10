@@ -97,7 +97,13 @@ class ProductCreator
                             "title" => $title,
                             "descriptionHtml" => $desc,
                             "images" => [["altText" => $title, "src" => $imagePath]],
-                            "variants" => [["price" => $price]],
+                            "variants" => [
+                                [
+                                    "price" => $price,
+                                    "inventoryItem" => ["tracked" => false],
+                                    "sku" => "gp-gw-aph"
+                                ]
+                            ],
                         ]
                     ]
                 ],
@@ -127,7 +133,8 @@ class ProductCreator
                             "variants" => [
                                 [
                                     "price" => $price,
-                                    "inventoryItem" => ["tracked" => false]
+                                    "inventoryItem" => ["tracked" => false],
+                                    "sku" => "gp-gw-aph"
                                 ]
                             ],
                         ]
@@ -191,30 +198,61 @@ class ProductCreator
         $client = new Graphql($session->getShop(), $session->getAccessToken());
         $query = <<<'QUERY'
                     query {
-                    orders(first: 10) {
-                        edges {
-                        node {
-                            id
+                        orders(first: 250, query: "sku:gp-gw-aph") {
+                            edges {
+                                node {
+                                    id
+                                    totalPriceSet {
+                                        shopMoney {
+                                            amount
+                                            currencyCode
+                                        }
+                                    }
+                                }
+                            }
                         }
-                        }
-                    }
                     }
                 QUERY;
                 
         $response = $client->query(
             [
                 "query" => $query,
-                // "variables" => [
-                //     "input" => [
-                //         "cache" => false,
-                //         "displayScope" => 'ALL',
-                //         "src" => "https://wearelegion.xyz/js/email-widget.js",
-                //     ]
-                // ]
             ]
         );
                 
-        return $response->getBody()->__toString();
+        return json_decode($response->getBody()->__toString());
+    }
+
+    public static function getOrdersByDate(Session $session, $startDate, $endDate)
+    {
+
+        $client = new Graphql($session->getShop(), $session->getAccessToken());
+        $query = <<<QUERY
+                    query {
+                        orders(first: 250, query: "sku:gp-gw-aph AND created_at:>=$startDate created_at:<=$endDate") {
+                            edges {
+                                node {
+                                    id
+                                    createdAt
+                                    totalPriceSet {
+                                        shopMoney {
+                                            amount
+                                            currencyCode
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                QUERY;
+                
+        $response = $client->query(
+            [
+                "query" => $query,
+            ]
+        );
+                
+        return json_decode($response->getBody()->__toString());
     }
 
     public function setScriptTag(Session $session)

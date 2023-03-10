@@ -406,7 +406,7 @@ Route::post('/api/gift/clicks', function (Request $request) {
 Route::post('/api/gift/addcart', function (Request $request) {
     /** @var AuthSession */
         
-    store_add_to_cart_gift($request->shop, $request->gift_id, $request->product_id);
+    store_add_to_cart_gift($request->shop, $request->gift_id, $request->product_id, $request->product_name);
 
     return response()->json($request);
     
@@ -418,8 +418,20 @@ Route::get('/api/gift/insights', function (Request $request) {
 
     $dbSessionClicks = AphClick::where ('shop', '=', $session->getShop())->get()->toArray();
     $dbSessionCarts = AphGiftCartInsight::where ('shop', '=', $session->getShop())->get()->toArray();
+    $ordersObj = ProductCreator::getOrders($session);
+    $totalOrders = count($ordersObj->data->orders->edges);
+    $currenCode = '$';
+    $orderTotal = 0;
+
+    foreach($ordersObj->data->orders->edges as $node) {
+        $currenCode = $node->node->totalPriceSet->shopMoney->currencyCode;
+        $orderTotal += $node->node->totalPriceSet->shopMoney->amount;
+    }
     $gift_clicks = [];
     $gift_cart = [];
+    $gift_orders[0][0] = 'All';
+    $gift_orders[0][1] = $totalOrders;
+    $gift_orders[0][2] = $currenCode .''. $orderTotal;
     if (!empty($dbSessionClicks)) {
         $gift_clicks[0][0] = 'All';
         $gift_clicks[0][1] = array_sum(array_column($dbSessionClicks,'clicks'));
@@ -428,7 +440,13 @@ Route::get('/api/gift/insights', function (Request $request) {
         $gift_cart[0][0] = 'All';
         $gift_cart[0][1] = array_sum(array_column($dbSessionCarts,'add_to_cart'));
     }
-    return response()->json(['success' => true, 'giftClicks' => $gift_clicks, 'giftInsight' => $gift_cart]);
+    return response()->json(
+        [
+            'success' => true, 'giftClicks' => $gift_clicks, 
+            'giftInsight' => $gift_cart, 'giftOrders' => $gift_orders,
+            'orderCurrency' => $currenCode, 'orderTotal' => $orderTotal, 'orderCount' => $totalOrders
+        ]
+    );
     
 })->middleware('shopify.auth');
 
@@ -441,10 +459,15 @@ Route::get('/api/gift/insights/{start_date}/{end_date}', function (Request $requ
 
     $dbSessionClicks = AphClick::where ('shop', '=', $session->getShop())->whereBetween('created_at', [$dateS->format('Y-m-d')." 00:00:00", $dateE->format('Y-m-d')." 23:59:59"])->get()->toArray();
     $dbSessionCarts = AphGiftCartInsight::where ('shop', '=', $session->getShop())->whereBetween('created_at', [$dateS->format('Y-m-d')." 00:00:00", $dateE->format('Y-m-d')." 23:59:59"])->get()->toArray();
+    $ordersObj = ProductCreator::getOrdersByDate($session, $dateS->toIso8601ZuluString(), $dateE->toIso8601ZuluString());
     $gift_clicks = [];
     $gift_clicks_total = 0;
     $gift_cart_total = 0;
     $gift_cart = [];
+    $totalOrders = 0;
+    $currenCode = '$';
+    $orderTotal = 0;
+
     if (!empty($dbSessionClicks)) {
         $gift_clicks_total = array_sum(array_column($dbSessionClicks,'clicks'));
         foreach($dbSessionClicks as $clickSess){
@@ -456,10 +479,35 @@ Route::get('/api/gift/insights/{start_date}/{end_date}', function (Request $requ
         $gift_cart_total = array_sum(array_column($dbSessionCarts,'add_to_cart'));
         foreach($dbSessionCarts as $cartSess){
             $tmpDate = new Carbon($cartSess['created_at']);
-            $gift_cart[] = [$tmpDate->format("Y-m-d"), $cartSess['add_to_cart'], $cartSess['product_id']];
+            $tmplink = 'https://' . $session->getShop() . '/admin/products/' . $cartSess['product_id'];
+            //$tmplinkstr = '<a target="_PARENT" className="btn primary" href=' . $tmplink . '>' . $cartSess['product_id'] . '</a>';
+            $gift_cart[] = [$tmpDate->format("Y-m-d"), $cartSess['add_to_cart'], $tmplink, $cartSess['product_name']];
         }
     }
-    return response()->json(['success' => true, 'giftClicksTotal' => $gift_clicks_total, 'giftClicks' => $gift_clicks, 'giftInsightTotal' => $gift_cart_total, 'giftInsight' => $gift_cart]);
+
+  /*  $gift_orders[0][0] = 'All';
+    $gift_orders[0][1] = $totalOrders;
+    $gift_orders[0][2] = $currenCode .''. $orderTotal;*/
+    $gift_orders = [];
+    $ordCount = 0;
+    foreach($ordersObj->data->orders->edges as $node) {
+        $tmpDate = new Carbon($node->node->createdAt);
+        $ordCount++;
+        $currenCode = $node->node->totalPriceSet->shopMoney->currencyCode;
+        $orderTotal += $node->node->totalPriceSet->shopMoney->amount;
+        $gift_orders[] = [$tmpDate->format("Y-m-d"), 1, $node->node->totalPriceSet->shopMoney->amount];
+    }
+
+    $gift_orders = sum_order_array($gift_orders);
+
+    return response()->json(
+        [
+            'success' => true, 'giftClicksTotal' => $gift_clicks_total, 
+            'giftClicks' => $gift_clicks, 'giftInsightTotal' => $gift_cart_total, 
+            'giftInsight' => $gift_cart, 'giftOrders' => $gift_orders,
+            'orderCurrency' => $currenCode, 'orderTotal' => $orderTotal, 'orderCount' => $ordCount
+        ]
+    );
     
 })->middleware('shopify.auth');
 
@@ -474,12 +522,13 @@ Route::get('/api/billing/charge', function (Request $request) {
 Route::get('/api/billing/status', function (Request $request) {
    
     $session = $request->get('shopifySession');
-   // die('working');
+
     $dbSession = AphPayment::where ('shop', '=', $session->getShop())
                             ->where('status', '=', 'active')->first();
     if (!$dbSession) {
         $confirmationUrl = EnsureBilling::getPaymentURL($session, Config::get('shopify.billing'));
-        return response()->json(['success' => true, 'payment_status' => false, 'red_link' => $confirmationUrl]);
+        $confirmationUrlY = EnsureBilling::getPaymentURLYearly($session, Config::get('shopify.billing_yearly'));
+        return response()->json(['success' => true, 'payment_status' => false, 'red_link' => $confirmationUrl, 'red_link_year' => $confirmationUrlY ]);
     }
 
     return response()->json(['success' => true, 'payment_status' => true]);
@@ -629,13 +678,14 @@ function store_clicks($shop, $gid) {
     return 'Data saved';;
 }
 
-function store_add_to_cart_gift($shop, $gid, $pid) {
+function store_add_to_cart_gift($shop, $gid, $pid, $pname) {
     
     $dbSession = new AphGiftCartInsight();
     $dbSession->gift_id = $gid;
     $dbSession->product_id = $pid;
     $dbSession->add_to_cart = 1;
     $dbSession->shop = $shop;
+    $dbSession->product_name = $pname;
     
     try {
         $dbSession->save();
@@ -645,4 +695,33 @@ function store_add_to_cart_gift($shop, $gid, $pid) {
     }
 
     return 'Data saved';;
+}
+
+function sum_order_array($data) {
+    // Create a dictionary to store the daily totals
+    $daily_totals = [];
+
+    // Iterate through the original data
+    foreach ($data as $row) {
+        // Extract the date, order count, and amount from the row
+        list($date, $orders, $amount) = $row;
+        
+        // Check if this date has already been seen
+        if (array_key_exists($date, $daily_totals)) {
+            // If it has, add the current order count and amount to the existing total
+            $daily_totals[$date][0] += $orders;
+            $daily_totals[$date][1] += $amount;
+        } else {
+            // If it hasn't, create a new entry for this date with the current order count and amount
+            $daily_totals[$date] = [$orders, $amount];
+        }
+    }
+
+    // Convert the dictionary back into a list of lists
+    $output = [];
+    foreach ($daily_totals as $date => $totals) {
+        $output[] = [$date, $totals[0], number_format((float)$totals[1], 2, '.', '')];
+    }
+
+    return $output;
 }

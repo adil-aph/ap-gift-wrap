@@ -14,22 +14,30 @@ import { ClickDataTable } from "../components/ClickDataTable";
 import { ClickDataChart } from "../components/ClickDataChart";
 import { CartDataChart } from "../components/CartDataChart";
 import { CartDataTable } from "../components/CartDataTable";
+import { OrderDataTable } from "../components/OrderDataTable";
+import { OrderDataChart } from "../components/OrderDataChart";
 
 import "../assets/appStyle.css";
+
 
 export default function AphDashboard() {
   const now = new Date();
   const fetch = useAuthenticatedFetch();
   const [giftClicks, setGiftClicks] = useState(0);
   const [giftCarts, setGiftCarts] = useState(0);
+  const [giftOrderTotal, setGiftOrderTotal] = useState('');
+  const [giftOrderCount, setGiftOrderCount] = useState('');
   const [{month, year}, setDate] = useState({month: now.getMonth(), year: now.getFullYear()});
   const [popoverActive, setPopoverActive] = useState(false);
   const [selectedDates, setSelectedDates] = useState({
     start: new Date('Wed Feb 07 2018 00:00:00 GMT-0500 (EST)'),
     end: new Date('Mon Mar 12 2018 00:00:00 GMT-0500 (EST)'),
   });
+
   const [clicksData, setClicksData] = useState([[]]);
   const [cartsData, setCartsData] = useState([[]]);
+  const [ordersData, setOrderData] = useState([[]]);
+  
 
   // Similar to componentDidMount and componentDidUpdate:
   useEffect(() => {
@@ -42,8 +50,12 @@ export default function AphDashboard() {
       console.log('res insights ', resp);
       setGiftCarts(resp.giftInsight[0][1]);
       setGiftClicks(resp.giftClicks[0][1]);
+      setGiftOrderTotal(resp.orderCurrency + '' + resp.orderTotal);
+      setGiftOrderCount(resp.orderCount);
       setClicksData(resp.giftClicks);
       setCartsData(resp.giftInsight);
+      setCartsData(resp.giftInsight);
+      setOrderData(resp.giftOrders);
     });
 
   }, []);
@@ -62,8 +74,11 @@ export default function AphDashboard() {
       console.log('res insights ', resp);
       setGiftClicks(resp.giftClicksTotal);
       setGiftCarts(resp.giftInsightTotal);
+      setGiftOrderTotal(resp.orderCurrency + '' + resp.orderTotal);
+      setGiftOrderCount(resp.orderCount);
       setClicksData(resp.giftClicks);
       setCartsData(resp.giftInsight);
+      setOrderData(resp.giftOrders);
     });
     togglePopoverActive();
   }
@@ -84,7 +99,7 @@ export default function AphDashboard() {
   console.log('selected data ', selectedDates);
 
   return (
-    <Page>
+    <Page fullWidth>
       <TitleBar
         title="Dashboard"
         // primaryAction={{
@@ -136,22 +151,52 @@ export default function AphDashboard() {
           </Popover>
         </Layout.Section>
         <Layout.Section>
-          <Card sectioned>
-            <Heading>Add To Cart</Heading>
-            <TextContainer>
-              <h4>{giftCarts}</h4>
-            </TextContainer>
-            <CartDataTable insightdata={cartsData} />
-            <CartDataChart insightdata={cartsData} />
-          </Card>
+          <div className="card_container" style={{textAlign: 'center'}}>
+            <Card sectioned>
+              <div className="add_to_cart_head_secton" style={{display: 'inline-block'}}>
+                <TextContainer>
+                  <Heading>Revenue</Heading>
+                  <p className="Polaris-DisplayText Polaris-DisplayText--sizeLarge">{giftOrderTotal}</p>
+                </TextContainer>
+              </div>
+              <div className="add_to_cart_head_secton" style={{display: 'inline-block', marginLeft: '50px'}}>
+                <TextContainer>
+                  <Heading>Total Orders</Heading>
+                  <p className="Polaris-DisplayText Polaris-DisplayText--sizeLarge">{giftOrderCount}</p>
+                </TextContainer>
+              </div>
+            </Card>
+          </div>
+          <OrderDataTable insightdata={ordersData} />
+          <OrderDataChart insightdata={ordersData} />
+         
+        </Layout.Section>
+        <Layout.Section>
+          <div className="card_container">
+            <Card sectioned>
+              <div className="add_to_cart_head_secton">
+                <TextContainer>
+                  <Heading>Add To Cart</Heading>
+                  <p className="Polaris-DisplayText Polaris-DisplayText--sizeLarge">{giftCarts}</p>
+                </TextContainer>
+              </div>
+            </Card>
+          </div>
+          <CartDataTable insightdata={cartsData} />
+          <CartDataChart insightdata={cartsData} />
+         
         </Layout.Section>
         <Layout.Section secondary>
-          <Card sectioned>
-            <Heading>Clicks</Heading>
-            <TextContainer>
-              <h4>{giftClicks}</h4>
-            </TextContainer>
-          </Card>
+          <div className="card_container">
+            <Card sectioned>
+              <div className="add_to_cart_head_secton">
+                <TextContainer>
+                  <Heading>Clicks</Heading>
+                  <p className="Polaris-DisplayText Polaris-DisplayText--sizeLarge">{giftClicks}</p>
+                </TextContainer>
+              </div>
+            </Card>
+          </div>
           <ClickDataTable insightdata={clicksData} />
           <ClickDataChart insightdata={clicksData} />
         </Layout.Section>

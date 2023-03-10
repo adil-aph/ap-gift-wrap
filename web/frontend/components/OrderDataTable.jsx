@@ -1,8 +1,8 @@
 import React from 'react';
 import {Card, DataTable} from '@shopify/polaris';
 
-export function ClickDataTable(props) {
-  console.log('propps ', props.insightdata);
+export function OrderDataTable(props) {
+  console.log('propps odrer ', props.insightdata);
   const rows = props.insightdata;
 
   return (
@@ -12,10 +12,12 @@ export function ClickDataTable(props) {
           columnContentTypes={[
             'text',
             'numeric',
+            'numeric',
           ]}
           headings={[
             'Date',
-            'Clicks',
+            'Total Orders',
+            'Orders Amount'
           ]}
           rows={rows}
           footerContent={`Showing ${rows.length} of ${rows.length} results`}

@@ -1,5 +1,3 @@
-console.log("WELCOM TO THEME EXTENSION");
-
 const xmlhttp = new XMLHttpRequest();
 
 const { fetch: originalFetch } = window;
@@ -11,16 +9,14 @@ var prod_title;
 var prod_slug;
 var product_price = '';
 var product_image;
-const baseURL = 'https://bde2-94-205-107-178.in.ngrok.io';
+const baseURL = 'https://6d82-94-205-42-22.in.ngrok.io';
 
 /**
  * Send HTTP request to get Gift Product data 
+ * Used to hide Gift Product from store front
  */
 
-
-
 if (window.location.href.indexOf('cart') === -1) {
-    console.log('This is a cart page');
     xmlhttp.onload = function () {
         let resData = JSON.parse(this.responseText);
         
@@ -47,6 +43,9 @@ if (window.location.href.indexOf('cart') === -1) {
     }, 3000);
 }
 
+/**
+ * Detect product page as per Theme extension code on store front
+ */
 var giftHTML = document.getElementById("giftWrapHead"); 
 if (giftHTML != null) {
     if (giftHTML.innerHTML.length) {
@@ -63,7 +62,6 @@ if (giftHTML != null) {
         let aph_gift_textarea = document.getElementById("giftWrapText"); 
         
         aph_gift_check_elem.onchange = function(e){
-            //alert('click');
             if(aph_gift_check_elem != null && aph_gift_check_elem.checked == true) {
                 console.log('onchange ', e);
                 aph_gift_textarea.style.display = 'block';
@@ -81,26 +79,23 @@ if (giftHTML != null) {
     }
 }
 
-
-var testResp2;
-var testset = 0;
+/**
+ * Intercept Windows default Fetch request
+ * Alter Request and Response objects
+ */
 
 window.fetch = async (...args) => {
 
     let [resource, config] = args;
 
     // Check GiftBox is selected
-
     let giftBoxOption = document.getElementById("giftWrapOption");
 
     if (giftBoxOption != null && giftBoxOption.checked == true) {
-        console.log("CHECKED TRUE");
         let title_p = document.getElementsByTagName("h1")[0].innerHTML;
         let gifttext = document.getElementById("gifttext").value;
 
         // request interceptor here
-        console.log("res  ", resource);
-        console.log("args ", args);
         if (resource == "/cart/add") {
             if (
                 typeof args[1].body == "string" ||
@@ -115,11 +110,7 @@ window.fetch = async (...args) => {
                         properties: { 'Product Name': title_p, 'Your Custom Note': gifttext },
                     },
                 ];
-                console.log("JSON 1", jsonbody);
                 jsonbody["items"] = temparr;
-                //jsonbody.items[0].id = prod_id;
-                //jsonbody.items[0].properties.Product =  title_p;
-                console.log("JSON 2", JSON.stringify(jsonbody));
                 args[1].body = JSON.stringify(jsonbody);
             } else {
                 args[1].body.append("items[0][quantity]", 1);
@@ -138,22 +129,20 @@ window.fetch = async (...args) => {
                 var tmp_data = new FormData();
                 tmp_data.append('gift_id', prod_id);
                 tmp_data.append('product_id', pro_id);
+                tmp_data.append('product_name', pro_name);
                 aph_general_xmlhttp(xmlhttp, "post", baseURL + "/api/gift/addcart/", tmp_data);
             }, 2000);
         }
     }
 
-    console.log("TURE 2");
     const response = await originalFetch(resource, config);
 
-    console.log(" new res 1st ", response);
     if (resource == "/cart/change") {
         console.log(" new res 2st ", response);
         tempRes = response;
     }
     // response interceptor here
     if (resource == "/cart/change" && resource != "/cart/change.js") {
-        console.log("count ", ++testset);
         let testResp = response;
 
         console.log(" new respppp 1 ", testResp);
@@ -167,40 +156,6 @@ window.fetch = async (...args) => {
         });
 
         return tempRes;
-        //return tempRes;
-
-        /*setTimeout(() => {
-			return tempRes;
-		}, 5000);*/
-        /*const json = () =>
-			response
-			.clone()
-			.json()
-			.then((data) => {
-				console.log('new data 111', data);
-				if(data.item_count) {
-					deleteGift(data.items);
-					return data;
-				}
-				return data;
-			});	 
-*/
-        // json().then((resp) => {
-        // 	console.log('new data 111333', resp);
-        // 	return resp;
-        // });
-        // testResp.json().then(data => {
-        // 	console.log('new data ', data);
-        // 	console.log('new responses  ', response);
-        // 	if(data.item_count) {
-        // 		deleteGift(data.items).then(res => {
-        // 			console.log('ttt ', res);
-        // 			return res;
-        // 		});
-        // 	}
-        // 	return response;
-        // });
-        //response.json = json;
     } else {
         console.log("else res ", response);
         return response;
@@ -225,45 +180,6 @@ function deleteGift(crtO) {
                         nfIndx = ind;
                     }
                 }
-                // if (arr.some(e => e.product_title === item.properties.Product)) {
-                // 	/* vendors contains the element we're looking for */
-                // 	console.log('pro title ', e.product_title);
-                // 	console.log('item ititle ', item.properties.Product);
-                // } else {
-                // 	console.log('NOt found');
-                // }
-
-                /*const found = arr.find((elem, idx) => {
-					console.log('pro title ', elem.title);
-					console.log('item ititle ', item.properties.Product);
-
-					if(ind != idx)
-					{
-						if(elem.title == item.properties.Product )
-						{
-							console.log('pro title ', elem.title);
-							console.log('Product found');
-							console.log('item ititle ', item.properties.Product);
-							break;
-						} else {
-							console.log('Product NOT found');
-							let giftData = {
-								'line': (ind+1),
-								'quantity': (item.quantity - 1),
-								'sections': ['template--15018629529693__cart-items', 'cart-icon-bubble', 'cart-live-region-text', 'template--15018629529693__cart-footer'],
-								'sections_url': '/cart'
-							};
-								const respGift = fetch(window.Shopify.routes.root + 'cart/change.js', {
-									method: 'POST',
-									headers: {
-									'Content-Type': 'application/json'
-									},
-									body: JSON.stringify(giftData)	
-								})
-							return respGift;
-						}
-					}
-				});*/
             }
         });
 
