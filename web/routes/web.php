@@ -286,17 +286,6 @@ Route::get('/api/gift', function (Request $request) {
     
 })->middleware('shopify.auth');
 
-Route::get('/api/gift/test', function (Request $request) {
-    /** @var AuthSession */
-   
-    $session = $request->get('shopifySession'); // Provided by the shopify.auth middleware, guaranteed to be active
-    
-    store_product();
-
-    return response()->json('this is test respinse');
-    
-})->middleware('shopify.auth');
-
 Route::post('/api/gift/image', function (Request $request) {
 
     $image = $request->file('prodImage');
@@ -485,9 +474,6 @@ Route::get('/api/gift/insights/{start_date}/{end_date}', function (Request $requ
         }
     }
 
-  /*  $gift_orders[0][0] = 'All';
-    $gift_orders[0][1] = $totalOrders;
-    $gift_orders[0][2] = $currenCode .''. $orderTotal;*/
     $gift_orders = [];
     $ordCount = 0;
     foreach($ordersObj->data->orders->edges as $node) {
@@ -549,12 +535,13 @@ Route::get('/api/billing/confirm', function (Request $request) {
         $dbSession->charge_id = $request->charge_id;
         $dbSession->shop = $shop;
         $dbSession->status = 'active';
+        $dbSession->plan = $request->plan_id;
         $dbSession->save();
     }
 
     $tmpData = json_encode($request->all());
 
-    Log::error("Charged ID 3: {$request->charge_id} SHOP: {$shop} DATA: {$tmpData}");
+    Log::error("Charged ID 3: {$request->charge_id} SHOP: {$request->plan_id} DATA: {$tmpData}");
     return Redirect::to($returnUrl);
 
 });

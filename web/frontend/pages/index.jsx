@@ -52,13 +52,13 @@ const setAppStatusCallHandler = (val) => {
     <>
       {!statusActive &&
         <Page fullWidth>
-          <TitleBar title="Aphrodite's Gift Wrap" primaryAction={null} />
+          <TitleBar title="Giftify Pro - Gift Wrap, Custom Message" primaryAction={null} />
           <AppPurchased setPaymentStatus={checkStatus} setAppStatus={setAppStatusHandler} />
           </Page>
       }
       {statusActive &&
         <Page narrowWidth>
-        <TitleBar title="Aphrodite's Gift Wrap" primaryAction={null} />
+        <TitleBar title="Giftify Pro - Gift Wrap, Custom Message" primaryAction={null} />
         <Layout>
           <Layout.Section>
             <CancelPlan setPaymentStatus={checkStatus} setAppStatus={setAppStatusHandler} />
@@ -76,7 +76,7 @@ const setAppStatusCallHandler = (val) => {
                   <TextContainer>
                     <div className="" style={{display: appInstructions ? 'none' : 'block'}}>
                           <p>
-                            In order for APH Gift Wrap Options to work properly in your OS 2.0 theme, you'll have to add it as a block from the Theme Customizer.
+                            In order for Giftify Pro - Gift Wrap Options to work properly in your OS 2.0 theme, you'll have to add it as a block from the Theme Customizer.
                             <u><b> Don't forget to click on the Save button!</b></u>
                           </p>
                           <p style={{'textAlign': 'center', 'marginTop': '15px'}}>

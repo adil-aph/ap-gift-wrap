@@ -188,7 +188,7 @@ h3.Polaris-Subheading {
     justify-content: center;
     align-items: center;
     width: 216px;
-    height: 56px;
+    height: 48px;
     text-align: center;
     border-radius: 12px;
     margin: 25px auto 0 auto;
@@ -207,5 +207,5 @@ h3.Polaris-Subheading {
     color: #fff;
   }
   .Polaris-Layout__Section--secondary {
-    flex: 3 1 15rem !important;
+    flex: 3 1 30rem !important;
   }

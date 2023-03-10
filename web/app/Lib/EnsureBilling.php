@@ -126,7 +126,8 @@ class EnsureBilling
         $hostName = Context::$HOST_NAME;
         $shop = $session->getShop();
         $host = base64_encode("$shop/admin");
-        $returnUrl = "https://3f68-86-98-212-172.eu.ngrok.io/api/billing/confirm?shop=aph-dev-store.myshopify.com&host=YXBoLWRldi1zdG9yZS5teXNob3BpZnkuY29tL2FkbWlu";//"https://$hostName?shop={$shop}&host=$host";
+        $plan = $config['plan_id'];
+        $returnUrl = "https://14fb-83-110-223-245.eu.ngrok.io/api/billing/confirm?shop=aph-dev-store.myshopify.com&host=YXBoLWRldi1zdG9yZS5teXNob3BpZnkuY29tL2FkbWlu&plan_id=" . $plan;//"https://$hostName?shop={$shop}&host=$host";
 
 
         if (self::isRecurring($config)) {

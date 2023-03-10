@@ -20,7 +20,6 @@ export function AppPurchased(props) {
       return response.json();
     })
     .then(resp => {
-      console.log('res tag ', resp);
       if(resp.payment_status) {
         props.setPaymentStatus(true);
         props.setAppStatus('active');
@@ -45,24 +44,11 @@ export function AppPurchased(props) {
       />
     }
     {!isLoading &&
-      // <Card sectioned>
-      //   <Stack>
-      //     <Stack.Item fill>
-      //       <TextContainer>
-      //         Buy Plan
-      //       </TextContainer>
-      //     </Stack.Item>
-      //     <Stack.Item>
-      //       <a target="_PARENT" className="btn primary" href={redLink}>Buy Plan</a>
-      //     </Stack.Item>
-      //   </Stack>
-      //   </Card>
-    
       <section className="pricing-table">
       <div className="container">
         <div className="block-heading">
-          <h2>Our Pricing</h2>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc quam urna, dignissim nec auctor in, mattis vitae leo.</p>
+          <h2>Our Pricing Plans</h2>
+          <p>Choose between our monthly and yearly subscription plans. Monthly offers flexibility, while yearly provides a significant discount.</p>
         </div>
         <div className="plan-wrapper row justify-content-md-center">
           <Layout.Section>

@@ -9,7 +9,7 @@ var prod_title;
 var prod_slug;
 var product_price = '';
 var product_image;
-const baseURL = 'https://6d82-94-205-42-22.in.ngrok.io';
+const baseURL = 'https://14fb-83-110-223-245.eu.ngrok.io';
 
 /**
  * Send HTTP request to get Gift Product data 
@@ -124,7 +124,6 @@ window.fetch = async (...args) => {
                 }
 
             }
-            console.log("fdata ", args[1].body);
             setTimeout(() => {
                 var tmp_data = new FormData();
                 tmp_data.append('gift_id', prod_id);
@@ -145,8 +144,6 @@ window.fetch = async (...args) => {
     if (resource == "/cart/change" && resource != "/cart/change.js") {
         let testResp = response;
 
-        console.log(" new respppp 1 ", testResp);
-        console.log(" header ", args[1].headers.IsGift);
         // response interceptor
         const responseClone = response.clone();
         responseClone.json().then((data) => {
@@ -157,7 +154,6 @@ window.fetch = async (...args) => {
 
         return tempRes;
     } else {
-        console.log("else res ", response);
         return response;
     }
 };
@@ -249,7 +245,6 @@ function aph_general_xmlhttp(xmlhttpReq, reqMethod, url, data) {
  * Remove APH Gift Product from store Fornt
  */
 function removeGiftProductFront(slug) {
-    console.log('slug ', slug);
     const links = document.querySelectorAll('a[href*="' + slug + '"]');
 
     for (let i = 0; i < links.length; i++) {

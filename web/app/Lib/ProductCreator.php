@@ -260,26 +260,6 @@ class ProductCreator
 
         $client = new Graphql($session->getShop(), $session->getAccessToken());
 
-       /* $query = <<<'QUERY'
-            query {
-                scriptTags(first: 50, src: "https://wearelegion.xyz/js/email-widget.js") {
-                edges {
-                    node {
-                        id
-                        src
-                    }
-                }
-                }
-            }
-            QUERY;
-
-            $response = $client->query(["query" => $query]);
-            
-            $tags_data = json_decode($response->getBody()->__toString());
-
-            $tags_data = $tags_data->data->scriptTags->edges;*/
-           // if(empty($tags_data) || $tags_data[0]->node->src !== 'https://wearelegion.xyz/js/email-widget.js') {
-                
                 $query = <<<'QUERY'
                     mutation scriptTagCreate($input: ScriptTagInput!) {
                         scriptTagCreate(input: $input) {
@@ -308,30 +288,7 @@ class ProductCreator
                         ]
                     ]
                 );
-           // }
-        /*
-       $query = <<<'QUERY'
-                    mutation scriptTagDelete($id: ID!) {
-                        scriptTagDelete(id: $id) {
-                        deletedScriptTagId
-                        userErrors {
-                            field
-                            message
-                        }
-                        }
-                    }
-                    QUERY;
-
-        $response2 = $client->query(
-            [
-                "query" => $query,
-                "variables" => [
-                        "id" => 'gid://shopify/ScriptTag/187331510365',
-                    ]
-            ]
-        );
-      */
-
+          
         return $response->getBody()->__toString();
     }
 

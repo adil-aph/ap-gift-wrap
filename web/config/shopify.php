@@ -21,21 +21,23 @@ return [
         "required" => false,
 
         // Example set of values to create a charge for $5 one time
-        "chargeName" => "Gift Wrap App Monthly Billing",
+        "chargeName" => "Giftify Pro - Gift Wrap, Custom Message Monthly Billing",
         "amount" => 9.99,
         "currencyCode" => "USD", // Currently only supports USD
         "interval" => EnsureBilling::INTERVAL_EVERY_30_DAYS,
-        'test' => true
+        'test' => true,
+        'plan_id' => 1
     ],
     "billing_yearly" => [
         "required" => false,
 
         // Example set of values to create a charge for $5 one time
-        "chargeName" => "Gift Wrap App Yearly Billing",
+        "chargeName" => "Giftify Pro - Gift Wrap, Custom Message Yearly Billing",
         "amount" => 99.99,
         "currencyCode" => "USD", // Currently only supports USD
         "interval" => EnsureBilling::INTERVAL_ANNUAL,
-        'test' => true
+        'test' => true,
+        'plan_id' => 2
     ],
 
 ];

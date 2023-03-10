@@ -1,9 +1,5 @@
 import { useState, useCallback } from "react";
 import {
-  Card,
-  Heading,
-  TextContainer,
-  DisplayText,
   SettingToggle, 
   TextStyle
 } from "@shopify/polaris";

@@ -5,7 +5,6 @@ import {
   Popover
 } from "@shopify/polaris";
 import { CalendarMinor } from '@shopify/polaris-icons';
-import { LineChart } from '@shopify/polaris-viz';
 
 import { TitleBar } from "@shopify/app-bridge-react";
 import { useAuthenticatedFetch } from "../hooks";
@@ -33,6 +32,7 @@ export default function AphDashboard() {
     start: new Date('Wed Feb 07 2018 00:00:00 GMT-0500 (EST)'),
     end: new Date('Mon Mar 12 2018 00:00:00 GMT-0500 (EST)'),
   });
+  const [dateLabel, setDateLabel] = useState('Select Date');
 
   const [clicksData, setClicksData] = useState([[]]);
   const [cartsData, setCartsData] = useState([[]]);
@@ -81,12 +81,16 @@ export default function AphDashboard() {
       setOrderData(resp.giftOrders);
     });
     togglePopoverActive();
+
+    let sd = selectedDates.start.getFullYear() + '-' + (selectedDates.start.getMonth() + 1) + '-' + selectedDates.start.getDate();
+    let ed = selectedDates.end.getFullYear() + '-' + (selectedDates.end.getMonth() + 1) + '-' + selectedDates.end.getDate();
+    setDateLabel(sd + '-' + ed);
   }
 
   const activator = (
     <Layout.Section>
       <Button icon={CalendarMinor} onClick={togglePopoverActive}>
-        Select Date
+        {dateLabel}
       </Button>
     </Layout.Section>
   );
@@ -101,18 +105,7 @@ export default function AphDashboard() {
   return (
     <Page fullWidth>
       <TitleBar
-        title="Dashboard"
-        // primaryAction={{
-        //   content: "Primary action",
-        //   onAction: () => console.log("Primary action"),
-        // }}
-        // secondaryActions={[
-        //   {
-        //     content: "Secondary action",
-        //     onAction: () => console.log("Secondary action"),
-        //   }, <div style={{ visibility: this.state.driverDetails.firstName != undefined? 'visible': 'hidden'}}></div>
-
-        // ]}
+        title="Giftify Pro - Gift Wrap, Custom Message - Analytics"
       />
       <Layout>
         <Layout.Section>
