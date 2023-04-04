@@ -1,7 +1,7 @@
 {
     "name": "laravel/laravel",
     "type": "project",
-    "description": "Giftify Pro - Gift Wrap, Custom Message",
+    "description": "WrapItUp: Add Gift Wrap & Msg",
     "keywords": ["framework", "laravel"],
     "license": "UNLICENSED",
     "require": {

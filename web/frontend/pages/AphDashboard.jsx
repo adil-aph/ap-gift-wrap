@@ -105,7 +105,7 @@ export default function AphDashboard() {
   return (
     <Page fullWidth>
       <TitleBar
-        title="Giftify Pro - Gift Wrap, Custom Message - Analytics"
+        title="WrapItUp: Add Gift Wrap & Msg - Analytics"
       />
       <Layout>
         <Layout.Section>

@@ -20,6 +20,9 @@ class VerifyCsrfToken extends Middleware
         'api/gift/image',
         'api/gift/clicks',
         'api/gift/addcart',
-        'api/billing/charge'
+        'api/billing/charge',
+        'api/gdpr/getcustomer',
+        'api/gdpr/delcustomer',
+        'api/gdpr/delshop'
     ];
 }

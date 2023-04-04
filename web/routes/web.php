@@ -24,6 +24,7 @@ use Shopify\Webhooks\Registry;
 use Shopify\Webhooks\Topics;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Lib\Handlers\Gdpr\CustomersDataRequest;
 
 /*
 |--------------------------------------------------------------------------
@@ -69,8 +70,8 @@ Route::get('/api/auth/callback', function (Request $request) {
     $shop = Utils::sanitizeShopDomain($request->query('shop'));
 
     $response = Registry::register('/api/webhooks', Topics::APP_UNINSTALLED, $shop, $session->getAccessToken());
+    
     if ($response->isSuccess()) {
-        //Session::where('shop', $shop)->delete();
         Log::debug("Registered APP_UNINSTALLED webhook for shop $shop and host $host");
     } else {
         Log::error(
@@ -274,15 +275,16 @@ Route::post('/api/gift/update', function (Request $request) {
 Route::get('/api/gift', function (Request $request) {
     
     $session = $request->get('shopifySession'); // Provided by the shopify.auth middleware, guaranteed to be active
+    $product_info = '';
 
     $dbSession = GiftProduct::where ('shop', '=', $session->getShop())->first();
-
-    if ($dbSession->exists) {
+    if (!empty($dbSession)) {
         $proO = new ProductCreator();
         $proResp = $proO->getGiftProduct($session, $dbSession->product_gid);
         $product_info = json_decode($proResp);
+        $product_info = $product_info->data->product;
     }
-    return response()->json(['success' => true, 'data' => $product_info->data->product]);
+    return response()->json(['success' => true, 'data' => $product_info]);
     
 })->middleware('shopify.auth');
 
@@ -383,12 +385,14 @@ Route::get('/api/gift/layout', function (Request $request) {
     
 });
 
-Route::post('/api/gift/clicks', function (Request $request) {
+Route::get('/api/gift/clicks', function (Request $request) {
     /** @var AuthSession */
         
     store_clicks($request->shop, $request->gift_id);
 
-    return response()->json($request);
+    return response()->json([
+        "success" => 'Ths  stest'
+    ]);
     
 });
 
@@ -590,6 +594,28 @@ Route::get('/api/app/status/{current_status}', function (Request $request, $curr
     ]);
 })->middleware('shopify.auth');
 
+/**
+ * GDPR webhooks
+ */
+Route::post('/api/gdpr/getcustomer', function (Request $request) {
+    Log::error("This App did not stored any customer related data in database");
+
+    return response()->json(['message' => "This App did not stored any customer related data in database"], 200);
+});
+
+Route::post('/api/gdpr/delcustomer', function (Request $request) {
+    Log::error("This App did not stored any customer related data in database");
+
+    return response()->json(['message' => "This App did not stored any customer related data in database"], 200);
+});
+
+Route::post('/api/gdpr/delshop', function (Request $request) {
+    Log::error("This App did not stored any customer related data in database");
+
+    return response()->json(['message' => "This App did not stored any customer related data in database"], 200);
+});
+
+
 function store_product($pgid, $ptitle, $pprice, $pdesc, $pimg, $vid, $shop_name, $p_slug) {
 
    // $dbSession = GiftProduct::find(1);
@@ -621,7 +647,7 @@ function get_product($shop_name) {
     
     $dbSession = GiftProduct::where ('shop', '=', $shop_name)->first();
 
-    if ($dbSession->exists) {
+    if (!empty($dbSession)) {
         return $dbSession;
     }
 
@@ -632,7 +658,7 @@ function is_script_tag($shop_name) {
     
     $dbSession = Session::where ('shop', '=', $shop_name)->first();
 
-    if ($dbSession->exists) {
+    if (!empty($dbSession)) {
         return $dbSession->script_tag_active;
     }
 

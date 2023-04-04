@@ -127,7 +127,7 @@ class EnsureBilling
         $shop = $session->getShop();
         $host = base64_encode("$shop/admin");
         $plan = $config['plan_id'];
-        $returnUrl = "https://14fb-83-110-223-245.eu.ngrok.io/api/billing/confirm?shop=aph-dev-store.myshopify.com&host=YXBoLWRldi1zdG9yZS5teXNob3BpZnkuY29tL2FkbWlu&plan_id=" . $plan;//"https://$hostName?shop={$shop}&host=$host";
+        $returnUrl = "https://035a-94-203-245-93.in.ngrok.io/api/billing/confirm?shop=". $shop ."&host=". $host ."&plan_id=" . $plan;//"https://$hostName?shop={$shop}&host=$host";
 
 
         if (self::isRecurring($config)) {
@@ -164,7 +164,7 @@ class EnsureBilling
                         ],
                     ],
                     "returnUrl" => $returnUrl,
-                    "test" => !self::isProd(),
+                    "test" => true, //!self::isProd(),
                 ],
             ]
         );

@@ -1,10 +1,20 @@
-import React from 'react';
+import {React,useState,useMemo} from 'react';
 import {Card, DataTable, Link} from '@shopify/polaris';
+import AppPaginationOutput from './AppPaginationOutput';
 
 export function CartDataTable(props) {
   console.log('propps ', props.insightdata);
+  let PageSize = 10;
 
-  const tempRow = props.insightdata.map( elem => {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const currentTableData = useMemo(() => {
+    const firstPageIndex = (currentPage - 1) * PageSize;
+    const lastPageIndex = firstPageIndex + PageSize;
+    return props.insightdata.slice(firstPageIndex, lastPageIndex);
+  }, [currentPage]);
+
+  const tempRow = currentTableData.map( elem => {
     let tmp = <Link
     removeUnderline
     url= {elem[2]}
@@ -32,8 +42,15 @@ export function CartDataTable(props) {
             'Products',
           ]}
           rows={tempRow}
-          footerContent={`Showing ${tempRow.length} of ${tempRow.length} results`}
+          footerContent={`Showing ${currentTableData.length} of ${props.insightdata.length} results`}
         />
+        <AppPaginationOutput
+          className="pagination-bar"
+          currentPage={currentPage}
+          totalCount={props.insightdata.length}
+          pageSize={PageSize}
+          onPageChange={page => setCurrentPage(page)}
+        /> 
       </Card>
   );
 }

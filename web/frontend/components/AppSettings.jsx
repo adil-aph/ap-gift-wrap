@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import {
-  SettingToggle, 
-  TextStyle
+  SettingToggle
 } from "@shopify/polaris";
 import { Toast } from "@shopify/app-bridge-react";
 import { useAppQuery, useAuthenticatedFetch } from "../hooks";
@@ -42,7 +41,7 @@ export function AppSettings(props) {
   );
 
   const contentStatus = active ? 'Deactivate' : 'Activate';
-  const textStatus = active ? 'activated' : 'deactivated';
+  const textStatus = active ? "The widget's setting is enabled. Please press the 'Deactivate' button to hide the gift wrap option from a product page." : "The widget's setting is disabled. The gift Wrap widget is not displaying on the product page. Activate it to show gift wrap on the product page.";
   
   return (
     <>
@@ -54,7 +53,7 @@ export function AppSettings(props) {
             }}
             enabled={active}
             >
-            This setting is <TextStyle variation="strong">{textStatus}</TextStyle>.
+            {textStatus}. 
         </SettingToggle>
     </>
   );

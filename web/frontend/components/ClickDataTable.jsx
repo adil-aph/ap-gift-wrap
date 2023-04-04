@@ -1,9 +1,19 @@
-import React from 'react';
+import {React,useState,useMemo} from 'react';
 import {Card, DataTable} from '@shopify/polaris';
+import AppPaginationOutput from './AppPaginationOutput';
 
 export function ClickDataTable(props) {
   console.log('propps ', props.insightdata);
-  const rows = props.insightdata;
+  let PageSize = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const currentTableData = useMemo(() => {
+    const firstPageIndex = (currentPage - 1) * PageSize;
+    const lastPageIndex = firstPageIndex + PageSize;
+    return props.insightdata.slice(firstPageIndex, lastPageIndex);
+  }, [currentPage]);
+
+  const rows = currentTableData;
 
   return (
       <Card sectioned>
@@ -18,8 +28,15 @@ export function ClickDataTable(props) {
             'Clicks',
           ]}
           rows={rows}
-          footerContent={`Showing ${rows.length} of ${rows.length} results`}
+          footerContent={`Showing ${currentTableData.length} of ${props.insightdata.length} results`}
         />
+        <AppPaginationOutput
+          className="pagination-bar"
+          currentPage={currentPage}
+          totalCount={props.insightdata.length}
+          pageSize={PageSize}
+          onPageChange={page => setCurrentPage(page)}
+        /> 
       </Card>
   );
 }

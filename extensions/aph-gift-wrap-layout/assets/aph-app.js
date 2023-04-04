@@ -8,8 +8,8 @@ var prod_id;
 var prod_title;
 var prod_slug;
 var product_price = '';
-var product_image;
-const baseURL = 'https://14fb-83-110-223-245.eu.ngrok.io';
+var product_image = '';
+const baseURL = 'https://giftify-pro-gift-app.digitalagebusiness.com';
 
 /**
  * Send HTTP request to get Gift Product data 
@@ -26,6 +26,7 @@ if (window.location.href.indexOf('cart') === -1) {
         product_price = resData.product_price;
         product_image = resData.product_image; 
         document.getElementById("gift_product_price").innerHTML = product_price;
+        document.getElementById("gift_image").src = product_image;
         if(resData.app_status == 'deactive')
             document.getElementById("aph_gift_wrap_app").remove();
         removeGiftProductFront(prod_slug);
@@ -72,7 +73,19 @@ if (giftHTML != null) {
             var tmp_data = new FormData();
             tmp_data.append('gift_id', prod_id);
 
-            aph_general_xmlhttp(xmlhttp, "post", baseURL + "/api/gift/clicks/", tmp_data);
+            xmlhttp.onload = function () {
+                console.log(this.responseText);
+            }
+            xmlhttp.open(
+                "GET",
+                baseURL + "/api/gift/clicks?shop=" +
+                    Shopify.shop + "&gift_id=" + prod_id
+            );
+            xmlhttp.send();
+        
+            //aph_general_xmlhttp(xmlhttp, "GET", baseURL + "/api/gift/clicks/?shop=" +
+           // Shopify.shop + "&gift_id=" + prod_id, null);
+            
           }
           
 
@@ -129,13 +142,22 @@ window.fetch = async (...args) => {
                 tmp_data.append('gift_id', prod_id);
                 tmp_data.append('product_id', pro_id);
                 tmp_data.append('product_name', pro_name);
-                aph_general_xmlhttp(xmlhttp, "post", baseURL + "/api/gift/addcart/", tmp_data);
+                xmlhttp.onload = function () {
+                    console.log(this.responseText);
+                }
+                xmlhttp.open(
+                    "POST",
+                    baseURL + "/api/gift/addcart?shop=" +
+                        Shopify.shop
+                );
+                xmlhttp.send(tmp_data);
+               // aph_general_xmlhttp(xmlhttp, "post", baseURL + "/api/gift/addcart/", tmp_data);
             }, 2000);
         }
     }
 
     const response = await originalFetch(resource, config);
-
+    console.log(" new res ", resource);
     if (resource == "/cart/change") {
         console.log(" new res 2st ", response);
         tempRes = response;
@@ -145,6 +167,7 @@ window.fetch = async (...args) => {
         let testResp = response;
 
         // response interceptor
+        console.log('Resp Intercept ', response);
         const responseClone = response.clone();
         responseClone.json().then((data) => {
             if (data.item_count) {
@@ -229,16 +252,31 @@ function deleteGift(crtO) {
  * Send XML HTTP request to Server
  */
 function aph_general_xmlhttp(xmlhttpReq, reqMethod, url, data) {
-    xmlhttpReq.onload = function () {
+
+    const xmlhttptmp = new XMLHttpRequest();
+
+    xmlhttptmp.onload = function () {
         console.log(JSON.parse(this.responseText));
     };
 
-    xmlhttpReq.open(
-        reqMethod,
-        url + "?shop=" +
-            Shopify.shop
-    );
-    xmlhttpReq.send(data);
+    if(data != null) {
+        xmlhttptmp.open(
+            reqMethod,
+            url + "?shop=" +
+                Shopify.shop
+        );
+        xmlhttptmp.send(data);
+    }
+    else {
+        xmlhttptmp.open(
+            reqMethod,
+            url
+        );
+        xmlhttptmp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttptmp.setRequestHeader('Accept', 'application/json');
+
+        xmlhttptmp.send();
+    }
 }
 
 /**
@@ -246,7 +284,6 @@ function aph_general_xmlhttp(xmlhttpReq, reqMethod, url, data) {
  */
 function removeGiftProductFront(slug) {
     const links = document.querySelectorAll('a[href*="' + slug + '"]');
-
     for (let i = 0; i < links.length; i++) {
         const link = links[i];
         let parent = link.parentNode;
@@ -257,8 +294,8 @@ function removeGiftProductFront(slug) {
         if(parent == null || parent == 'null'){
             parent = link.parentNode;
         }
+        parent.parentNode.innerHTML = "<p>This product is not available for sale!</p>";
         parent.remove();
-        //parent.removeChild(link);
     }
 
 }

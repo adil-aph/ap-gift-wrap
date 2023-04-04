@@ -21,7 +21,7 @@ return [
         "required" => false,
 
         // Example set of values to create a charge for $5 one time
-        "chargeName" => "Giftify Pro - Gift Wrap, Custom Message Monthly Billing",
+        "chargeName" => "Recurring Plan",
         "amount" => 9.99,
         "currencyCode" => "USD", // Currently only supports USD
         "interval" => EnsureBilling::INTERVAL_EVERY_30_DAYS,
@@ -32,7 +32,7 @@ return [
         "required" => false,
 
         // Example set of values to create a charge for $5 one time
-        "chargeName" => "Giftify Pro - Gift Wrap, Custom Message Yearly Billing",
+        "chargeName" => "Recurring Plan",
         "amount" => 99.99,
         "currencyCode" => "USD", // Currently only supports USD
         "interval" => EnsureBilling::INTERVAL_ANNUAL,

@@ -3,7 +3,8 @@ import {
   Card,
   TextContainer,
   Button,
-  Stack
+  Stack,
+  TextStyle
 } from "@shopify/polaris";
 import { useAuthenticatedFetch } from "../hooks";
 
@@ -19,6 +20,9 @@ export function CancelPlan(props) {
       .then(resp => {
         console.log('res tag ', resp);
         props.setAppStatus('deactive');
+
+        window.location.reload();
+
         if(resp.payment_status) {
           props.setPaymentStatus(false);
           return;
@@ -26,7 +30,7 @@ export function CancelPlan(props) {
         props.setPaymentStatus(true);
       // setRedLink(resp.red_link);
       });
-    }
+    } 
   }
 
   return (
@@ -35,7 +39,7 @@ export function CancelPlan(props) {
       <Stack alignment="center">
         <Stack.Item fill>
           <TextContainer>
-            Cancel Plan
+            Press <TextStyle variation="strong">'Cancel Subscription'</TextStyle> button if you want to upgrade / downgrade or cancel the subscription
           </TextContainer>
         </Stack.Item>
         <Stack.Item>

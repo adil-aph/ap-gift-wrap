@@ -97,6 +97,7 @@ class ProductCreator
                             "title" => $title,
                             "descriptionHtml" => $desc,
                             "images" => [["altText" => $title, "src" => $imagePath]],
+                            "published" => true,
                             "variants" => [
                                 [
                                     "price" => $price,
@@ -130,6 +131,7 @@ class ProductCreator
                             "title" => $title,
                             "descriptionHtml" => $desc,
                             "images" => [["altText" => $title, "src" => $imagePath]],
+                            "published" => true,
                             "variants" => [
                                 [
                                     "price" => $price,

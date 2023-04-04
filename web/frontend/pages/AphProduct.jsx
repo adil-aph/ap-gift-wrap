@@ -22,7 +22,7 @@ const checkStatus = (val) => {
 }
   return (
     <Page narrowWidth>
-      <TitleBar title="Giftify Pro - Gift Wrap, Product Settings" primaryAction={null} />
+      <TitleBar title="WrapItUp: Add Gift Wrap & Msg, Product Settings" primaryAction={null} />
       <Layout>
         <Layout.Section>
           <Card sectioned>

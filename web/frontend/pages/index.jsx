@@ -14,6 +14,7 @@ import { useAuthenticatedFetch } from "../hooks";
 
 import { AppSettings, AppPurchased, CancelPlan } from "../components";
 import apptutorial from "../assets/apptutorial.gif";
+import appembed from "../assets/appembed.gif";
 
 export default function HomePage() {
 const fetch = useAuthenticatedFetch();
@@ -52,13 +53,13 @@ const setAppStatusCallHandler = (val) => {
     <>
       {!statusActive &&
         <Page fullWidth>
-          <TitleBar title="Giftify Pro - Gift Wrap, Custom Message" primaryAction={null} />
+          <TitleBar title="WrapItUp: Add Gift Wrap & Msg" primaryAction={null} />
           <AppPurchased setPaymentStatus={checkStatus} setAppStatus={setAppStatusHandler} />
           </Page>
       }
       {statusActive &&
         <Page narrowWidth>
-        <TitleBar title="Giftify Pro - Gift Wrap, Custom Message" primaryAction={null} />
+        <TitleBar title="WrapItUp: Add Gift Wrap & Msg" primaryAction={null} />
         <Layout>
           <Layout.Section>
             <CancelPlan setPaymentStatus={checkStatus} setAppStatus={setAppStatusHandler} />
@@ -76,13 +77,20 @@ const setAppStatusCallHandler = (val) => {
                   <TextContainer>
                     <div className="" style={{display: appInstructions ? 'none' : 'block'}}>
                           <p>
-                            In order for Giftify Pro - Gift Wrap Options to work properly in your OS 2.0 theme, you'll have to add it as a block from the Theme Customizer.
+                            In order for WrapItUp: Add Gift Wrap & Msg Options to work properly in your OS 2.0 theme, you'll have to add it as a block and eneble app embed from the Theme Customizer.
                             <u><b> Don't forget to click on the Save button!</b></u>
                           </p>
                           <p style={{'textAlign': 'center', 'marginTop': '15px'}}>
                             <img src={apptutorial} style={{ width: '70%'}} />
                           </p>
+                          <p>
+                            <b>App Embed</b>
+                          </p>
+                          <p style={{'textAlign': 'center', 'marginTop': '15px'}}>
+                            <img src={appembed} style={{ width: '70%'}} />
+                          </p>
                     </div>
+                    
                     <div className="" style={{display: appInstructions ? 'block' : 'none'}}>
                           A Script Tag will automatically added to the store to handle the front end functionality.
                     </div>

@@ -1,5 +1,5 @@
 {
-  "name": "giftify-pro-gift-wrap",
+  "name": "wrapitup-gift-wrap",
   "version": "1.0.0",
   "license": "UNLICENSED",
   "scripts": {
@@ -16,5 +16,8 @@
     "@shopify/cli": "^3.44.1",
     "@shopify/polaris-viz": "^8.1.1"
   },
-  "author": "Adil"
+  "author": "Adil",
+  "devDependencies": {
+    "classnames": "^2.3.2"
+  }
 }

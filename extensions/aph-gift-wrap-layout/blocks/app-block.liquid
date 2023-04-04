@@ -1,9 +1,20 @@
 {% if request.page_type == 'product' %}
-  {% render "app_snippet" %}
+  {% assign collection_handle = block.settings.allowed_collection %}
+  {% if collection_handle != null and collection_handle != "" %}
+    {% for collection in product.collections %}
+      {% if collection.handle == collection_handle %} 
+        {% render "app_snippet" %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {% render "app_snippet" %}
+  {% endif %}
+  
 {% endif %}
 
 {% if request.page_type == 'cart' %}
   <script>
+  console.log('cart page');
     fetch(window.Shopify.routes.root + 'cart.js')
       .then(response => response.json())
       .then( data => { 
@@ -14,7 +25,7 @@
 
 {% schema %}
   {
-    "name": "APH Gift Wrap Settings",
+    "name": "Gift Pro: Add Gift Wrap",
     "target": "section",
     "stylesheet": "aph-app.css",
     "javascript": "aph-app.js",
@@ -22,7 +33,8 @@
         { "label": "Text Color", "id": "text_color", "type": "color", "default": "#1fbd0b" },
         { "label": "GiftBox with Checkbox", "id": "text_checkbox", "type": "text", "default": "Gift Wrap My Item For" },
         { "label": "GiftBox Heading", "id": "text_heading", "type": "text", "default": "Gift Wrap My Order TO MAKE IT EXTRA SPECIAL!" },
-        { "label": "GiftBox Receipt Text", "id": "text_receipt", "type": "text", "default": "Its A Gift. Do Not Add Receipt" }
+        { "label": "GiftBox Receipt Text", "id": "text_receipt", "type": "text", "default": "Its A Gift. Do Not Add Receipt" },
+        { "label": "Select Collection", "info": " (If you want to enable Gift Wrap on specific collection)" , "id": "allowed_collection", "type": "collection"}
     ]
   }
 {% endschema %}

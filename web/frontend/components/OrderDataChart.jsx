@@ -34,7 +34,7 @@ export function OrderDataChart(props) {
             }}
             yAxisOptions={{
             labelFormatter: (y) => {
-                return `${y} $`
+                return `$${y}`
             }
             }}
             data={rows}

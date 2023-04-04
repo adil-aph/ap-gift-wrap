@@ -57,7 +57,7 @@ export function AppPurchased(props) {
                 <div className="heading">
                   <h3>MONTHLY PLAN</h3>
                   <div className="price">
-                    <h4>$9.99</h4>
+                    <h4>$9.99</h4><span> / month</span>
                   </div>
                 </div>
                 <div className="features">
@@ -83,7 +83,7 @@ export function AppPurchased(props) {
                 <div className="heading">
                   <h3>YEARLY PLAN</h3>
                   <div className="price">
-                    <h4>$99.99</h4>
+                    <h4>$99.99</h4><span> / year</span>
                   </div>
                 </div>
                 <div className="features">
